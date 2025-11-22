@@ -6,6 +6,13 @@
 
 Automatically switches macOS network locations based on connected Wi-Fi networks or Ethernet connections. This tool monitors network changes in real-time and seamlessly switches to the appropriate network location, making it perfect for users who work across multiple environments (home, office, coffee shops, etc.).
 
+## 🖥️ Supported OS
+
+- macOS 14.5+ (Sonoma)
+- macOS 15 (Sequoia)
+- macOS 26.1 (Tahoe)
+
+
 ## ✨ Key Features
 
 - 🔄 **Real-time Network Monitoring** - Uses macOS SystemConfiguration framework
@@ -134,3 +141,7 @@ Requires macOS 10.14+ and may need updates for future macOS versions as Apple ev
 ---
 
 **Made for macOS users who work across multiple networks**
+
+## 👨‍💻 Authors
+
+- Brian Drummond — Lead Developer
