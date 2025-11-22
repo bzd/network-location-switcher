@@ -1,0 +1,30 @@
+{
+  "_comment": "Network Location Switcher Configuration Template",
+  "_description": "Edit this file to match your network setup. Replace the example values below with your actual network names and locations.",
+  "_documentation": "See CONFIG.md for detailed configuration options and examples.",
+  
+  "ssid_location_map": {
+    "_example_comment": "Map your Wi-Fi network names (SSIDs) to macOS network locations",
+    "YourHomeWiFi": "Home",
+    "YourOfficeWiFi": "Work", 
+    "YourMobileHotspot": "Mobile",
+    "PublicWiFi": "Public"
+  },
+  
+  "default_wifi_location": "Automatic",
+  "_default_wifi_comment": "Network location to use for unknown Wi-Fi networks",
+  
+  "ethernet_location": "Wired",
+  "_ethernet_comment": "Network location to use when Ethernet cable is connected",
+  
+  "log_file": "/var/log/network-location-switcher.log",
+  "_log_comment": "Path where log messages are written. This will be automatically configured by setup.sh based on installation mode",
+  
+  "_setup_instructions": [
+    "1. Replace the example SSID names with your actual Wi-Fi network names",
+    "2. Ensure the network location names exist in System Preferences > Network > Location", 
+    "3. Create missing locations with: networksetup -createlocation 'LocationName' populate",
+    "4. Test with: python test-config.py",
+    "5. Remove all lines starting with '_' (they are just comments/examples)"
+  ]
+}

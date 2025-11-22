@@ -1,0 +1,21 @@
+# Native macOS requirements for network-location-switcher
+# Use this for venv installations on macOS
+
+# macOS System Configuration frameworks (required for native functionality)
+pyobjc>=10.0           # Python-to-Objective-C bridge
+#pyobjc-framework-SystemConfiguration>=10.0  # SystemConfiguration framework
+#pyobjc-framework-CoreFoundation>=10.0       # CoreFoundation framework
+
+# Optional: Enhanced network utilities
+# psutil>=5.9.0          # Cross-platform system and process utilities
+# netifaces>=0.11.0      # Portable network interface information
+
+# Logging and monitoring  
+structlog>=23.1.0      # Structured logging
+
+# Development and testing
+pytest>=7.4.0         # Testing framework
+pytest-cov>=4.1.0     # Coverage reporting
+black>=23.0.0          # Code formatting
+ruff>=0.8.0           # Fast Python linter and formatter
+mypy>=1.5.0            # Type checking
