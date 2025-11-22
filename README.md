@@ -8,7 +8,10 @@ Automatically switches macOS network locations based on connected Wi-Fi networks
 
 ## 🖥️ Supported OS
 
-- MacOS 14.5+ (Sonoma, Sequoia, Tahoe)
+- macOS 14.5+ (Sonoma)
+- macOS 15 (Sequoia)
+- macOS 26.1 (Tahoe)
+
 
 ## ✨ Key Features
 
