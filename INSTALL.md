@@ -191,15 +191,15 @@ sudo launchctl bootout system/com.system.network-location-switcher
 sudo launchctl list | grep network-location-switcher
 
 # View logs
-sudo tail -f /var/log/network-location-switcher-stdout.log
-sudo tail -f /var/log/network-location-switcher-stderr.log
-sudo tail -f /var/log/network-location-switcher.log
+sudo tail -f /usr/local/log/network-location-switcher-stdout.log
+sudo tail -f /usr/local/log/network-location-switcher-stderr.log
+sudo tail -f /usr/local/log/network-location-switcher.log
 ```
 
 #### File Locations
 - **Installation:** `/usr/local/lib/network-location-switcher/`
 - **Configuration:** `/usr/local/etc/network-location-config.json`
-- **Logs:** `/var/log/network-location-switcher*.log`
+- **Logs:** `/usr/local/log/network-location-switcher*.log`
 - **Service:** `/Library/LaunchDaemons/network-location-switcher-system.plist`
 
 #### Uninstallation
@@ -211,7 +211,7 @@ sudo rm /Library/LaunchDaemons/network-location-switcher-system.plist
 # Remove installation
 sudo rm -rf /usr/local/lib/network-location-switcher
 sudo rm /usr/local/etc/network-location-config.json
-sudo rm /var/log/network-location-switcher*.log
+sudo rm /usr/local/log/network-location-switcher*.log
 ```
 
 ## ⚙️ Configuration Setup
@@ -258,7 +258,7 @@ Edit the generated `network-location-config.json`:
   },
   "default_wifi_location": "Automatic",
   "ethernet_location": "Wired",
-  "log_file": "/var/log/network-location-switcher.log"
+  "log_file": "/usr/local/log/network-location-switcher.log"
 }
 ```
 
@@ -344,11 +344,11 @@ tail -f ~/Library/Logs/network-location-switcher-stderr.log
 #### System Mode  
 ```bash
 # Application logs (requires sudo)
-sudo tail -f /var/log/network-location-switcher.log
+sudo tail -f /usr/local/log/network-location-switcher.log
 
 # Service logs (requires sudo)
-sudo tail -f /var/log/network-location-switcher-stdout.log
-sudo tail -f /var/log/network-location-switcher-stderr.log
+sudo tail -f /usr/local/log/network-location-switcher-stdout.log
+sudo tail -f /usr/local/log/network-location-switcher-stderr.log
 ```
 
 ### Example Log Output
@@ -378,7 +378,7 @@ launchctl list | grep network-location-switcher
 # View error logs
 tail -f ~/Library/Logs/network-location-switcher-stderr.log  # User mode
 tail -f ./logs/stderr.log                               # Development mode
-sudo tail -f /var/log/network-location-switcher-stderr.log   # System mode
+sudo tail -f /usr/local/log/network-location-switcher-stderr.log   # System mode
 
 # Check plist file syntax
 plutil ~/Library/LaunchAgents/network-location-switcher-*.plist
@@ -416,9 +416,9 @@ touch ~/Library/Logs/network-location-switcher.log
 chmod 644 ~/Library/Logs/network-location-switcher.log
 
 # Fix log file permissions (system mode)
-sudo mkdir -p /var/log
-sudo touch /var/log/network-location-switcher.log
-sudo chmod 644 /var/log/network-location-switcher.log
+sudo mkdir -p /usr/local/log
+sudo touch /usr/local/log/network-location-switcher.log
+sudo chmod 644 /usr/local/log/network-location-switcher.log
 ```
 
 #### Python Module Errors
@@ -506,7 +506,7 @@ python network-location-switcher.py /path/to/custom-config.json
 ```bash
 # Setup log rotation (macOS newsyslog)
 sudo cat >> /etc/newsyslog.conf << EOF
-/var/log/network-location-switcher*.log    644  5     1000 *     J
+/usr/local/log/network-location-switcher*.log    644  5     1000 *     J
 EOF
 
 # Or use logrotate if installed via homebrew
@@ -522,7 +522,7 @@ EOF
 | **Runs when logged out** | ❌ No | ❌ No | ✅ Yes |
 | **Easy testing** | ✅ Yes | ❌ Service only | ❌ Service only |
 | **Config location** | `./` | `~/` | `/usr/local/etc/` |
-| **Log location** | `./logs/` | `~/Library/Logs/` | `/var/log/` |
+| **Log location** | `./logs/` | `~/Library/Logs/` | `/usr/local/log/` |
 | **Uninstall complexity** | ✅ Simple | ✅ Moderate | ⚠️ Requires sudo |
 
 ## 🎯 Recommendations

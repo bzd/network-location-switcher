@@ -175,7 +175,7 @@ def create_default_config(script_dir: str) -> dict[str, Any]:
         },
         "default_wifi_location": "Automatic",
         "ethernet_location": "Wired",
-        "log_file": "/var/log/network-location-switcher.log",
+        "log_file": "/usr/local/log/network-location-switcher.log",
     }
 
     try:
@@ -191,7 +191,7 @@ def create_default_config(script_dir: str) -> dict[str, Any]:
             "ssid_location_map": {},
             "default_wifi_location": "Automatic",
             "ethernet_location": "Wired",
-            "log_file": "/var/log/network-location-switcher.log",
+            "log_file": "/usr/local/log/network-location-switcher.log",
         }
 
 
@@ -202,7 +202,7 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
         "ssid_location_map": {},
         "default_wifi_location": "Automatic",
         "ethernet_location": "Wired",
-        "log_file": "/var/log/network-location-switcher.log",
+        "log_file": "/usr/local/log/network-location-switcher.log",
     }
 
     for key, default_value in defaults.items():

@@ -36,7 +36,7 @@ The script searches for configuration files in this order:
   },
   "default_wifi_location": "Automatic",
   "ethernet_location": "Wired", 
-  "log_file": "/var/log/network-location-switcher.log"
+  "log_file": "/usr/local/log/network-location-switcher.log"
 }
 ```
 
@@ -54,7 +54,7 @@ The script searches for configuration files in this order:
   },
   "default_wifi_location": "Automatic",
   "ethernet_location": "Wired",
-  "log_file": "/var/log/network-location-switcher.log"
+  "log_file": "/usr/local/log/network-location-switcher.log"
 }
 ```
 
@@ -83,11 +83,11 @@ The script searches for configuration files in this order:
 ### **log_file**
 - **Purpose**: Path where log messages are written
 - **Type**: String
-- **Default**: `"/var/log/network-location-switcher.log"`
+- **Default**: `"/usr/local/log/network-location-switcher.log"`
 - **Examples**: 
   - Development: `"./logs/network-switcher.log"`
   - User logs: `"~/network-location-switcher.log"`
-  - System logs: `"/var/log/network-location-switcher.log"`
+  - System logs: `"/usr/local/log/network-location-switcher.log"`
 
 ## 🏠 Setup Examples
 
@@ -115,7 +115,7 @@ The script searches for configuration files in this order:
   },
   "default_wifi_location": "Public",
   "ethernet_location": "Corporate Wired",
-  "log_file": "/var/log/network-location-switcher.log"
+  "log_file": "/usr/local/log/network-location-switcher.log"
 }
 ```
 
@@ -132,7 +132,7 @@ The script searches for configuration files in this order:
   },
   "default_wifi_location": "Public Safety",
   "ethernet_location": "Wired Connection", 
-  "log_file": "/var/log/network-location-switcher.log"
+  "log_file": "/usr/local/log/network-location-switcher.log"
 }
 ```
 
@@ -184,7 +184,7 @@ networksetup -listlocations
 ./network-location-switcher config.json
 
 # Check logs
-tail -f /var/log/network-location-switcher.log
+tail -f /usr/local/log/network-location-switcher.log
 ```
 
 ### **3. Verify SSID Names**
@@ -216,8 +216,8 @@ networksetup -switchtolocation "My Location"
 ### **Permission Issues**
 ```bash
 # Make log directory writable
-sudo mkdir -p /var/log
-sudo chmod 755 /var/log
+sudo mkdir -p /usr/local/log
+sudo chmod 755 /usr/local/log
 
 # Or use user-writable location
 "log_file": "~/network-location-switcher.log"

@@ -14,7 +14,7 @@ The project is designed to support both development and production modes simulta
 | **Virtual Env** | `/usr/local/lib/network-location-switcher/.venv` | `./.venv` (in repo) |
 | **Executable** | `/usr/local/bin/network-location-switcher` | `./network-location-switcher.py` |
 | **Service** | Running as LaunchAgent/Daemon | Stopped (run manually) |
-| **Logs** | `/var/log/` or `~/Library/Logs/` | `./logs/` |
+| **Logs** | `/usr/local/log/` or `~/Library/Logs/` | `./logs/` |
 
 ## 2. Setup Development Environment
 
@@ -137,7 +137,7 @@ The environments are isolated because:
    - Development: `./network-location-config.json`
 
 3. **Different log files**:
-   - Production: `/var/log/` or `~/Library/Logs/`
+   - Production: `/usr/local/log/` or `~/Library/Logs/`
    - Development: `./logs/`
 
 4. **Only one service can run at a time** (they both monitor the same network changes)

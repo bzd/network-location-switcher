@@ -8,7 +8,7 @@ Complete installation guide for setting up the network location switcher on a ne
 |--------|-------------|------------|
 | **Location** | Current directory | `/usr/local/bin` (or custom) |
 | **Virtual Env** | `./.venv` | `/usr/local/lib/network-location-switcher/.venv` |
-| **Logs** | `./logs/` | `/var/log/` |
+| **Logs** | `./logs/` | `/usr/local/log/` |
 | **Service Type** | User agent | System daemon or user agent |
 | **Permissions** | User only | System-wide or user |
 | **Dev Tools** | ✅ Pre-commit, linting | ❌ Minimal dependencies |
@@ -43,8 +43,8 @@ Complete installation guide for setting up the network location switcher on a ne
 ├── .venv/                                            # Virtual environment
 ├── network-location-switcher.py                     # Python script
 └── requirements-macos.txt                           # Dependencies
-/var/log/network-location-switcher-stdout.log        # Output logs
-/var/log/network-location-switcher-stderr.log        # Error logs
+/usr/local/log/network-location-switcher-stdout.log        # Output logs
+/usr/local/log/network-location-switcher-stderr.log        # Error logs
 ```
 
 ### **Custom Prefix** (`--prefix /opt`)
@@ -130,8 +130,8 @@ sudo launchctl bootstrap system /Library/LaunchDaemons/network-location-switcher
 sudo launchctl bootout system /Library/LaunchDaemons/network-location-switcher-system.plist
 
 # View logs
-sudo tail -f /var/log/network-location-switcher-stdout.log
-sudo tail -f /var/log/network-location-switcher-stderr.log
+sudo tail -f /usr/local/log/network-location-switcher-stdout.log
+sudo tail -f /usr/local/log/network-location-switcher-stderr.log
 ```
 
 ### **User Service Commands**
@@ -147,7 +147,7 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network-location-switche
 launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network-location-switcher-user.plist
 
 # View logs
-tail -f /var/log/network-location-switcher-stdout.log
+tail -f ~/Library/Logs/network-location-switcher-stdout.log
 ```
 
 ## 🛡️ Security & Permissions
@@ -163,7 +163,7 @@ tail -f /var/log/network-location-switcher-stdout.log
 
 - **Installation**: May require `sudo` for writing to `/usr/local/` or `/opt/`
 - **Runtime**: Runs as current user (for network configuration access)
-- **Log Files**: System logs in `/var/log/` may require `sudo` to read
+- **Log Files**: System logs in `/usr/local/log/` may require `sudo` to read
 
 ## 🔄 Updates & Maintenance
 
@@ -221,7 +221,7 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network-location-switche
 launchctl list | grep network-location-switcher
 
 # View logs
-tail -f /var/log/network-location-switcher-stdout.log
+tail -f ~/Library/Logs/network-location-switcher-stdout.log
 
 # Unload when done testing
 launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network-location-switcher-user.plist
@@ -234,7 +234,7 @@ launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network-location-switcher-
 | **Path** | `./network-location-switcher.py` | `/usr/local/bin/network-location-switcher` |
 | **Activation** | `source ./activate.sh` | Not needed |
 | **Dependencies** | Dev tools included | Minimal |
-| **Logs** | `./logs/` | `/var/log/` |
+| **Logs** | `./logs/` | `/usr/local/log/` |
 | **Updates** | Edit files directly | Re-run installer |
 | **Service Type** | User LaunchAgent | System LaunchDaemon or User LaunchAgent |
 | **Use Case** | Development & testing | Production deployment |
