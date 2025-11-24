@@ -1685,7 +1685,7 @@ install_and_launch_service() {
         echo "   sudo tail -f /usr/local/log/NetworkLocationSwitcher/network-location-switcher*.log  # View logs"
     else
         echo "   launchctl list | grep network-location-switcher       # Check status"
-        echo "   tail -f ~/Library/Logs/NetworkLocationSwitcher/network-location-switcher-*.log  # View logs"
+        echo "   tail -f ~/Library/Logs/NetworkLocationSwitcher/network-location-switcher*.log  # View logs"
     fi
     echo ""
 }
