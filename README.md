@@ -31,9 +31,10 @@ git clone https://github.com/bzd/network-location-switcher.git
 cd network-location-switcher
 
 # Create:
-#   1. runtime python virtual envinronment.
+#   1. runtime python virtual environment.
 #   2. plists for: development, user, and system.
 #   3. configuration file: network-location-config.json
+# HINT: Use the "--dry-run" switch to view what would be installed without any changes made
 ./setup.sh
 
 # Edit the newly created `network-location-config.json` file.  See CONFIG.md for details.
