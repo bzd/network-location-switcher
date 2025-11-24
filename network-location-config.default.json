@@ -18,7 +18,7 @@
   "_ethernet_comment": "Network location to use when Ethernet cable is connected",
   
   "log_file": "/usr/local/log/network-location-switcher.log",
-  "_log_comment": "Path where log messages are written. This will be automatically configured by setup.sh based on installation mode",
+  "_log_comment": "Path where log messages are written. This will be automatically configured by install.sh based on installation mode",
   
   "_setup_instructions": [
     "1. Replace the example SSID names with your actual Wi-Fi network names",
