@@ -14,7 +14,7 @@ The project is designed to support both development and production modes simulta
 | **Virtual Env** | `/usr/local/lib/network-location-switcher/.venv` | `./.venv` (in repo) |
 | **Executable** | `/usr/local/bin/network-location-switcher` | `./network-location-switcher.py` |
 | **Service** | Running as LaunchAgent/Daemon | Stopped (run manually) |
-| **Logs** | `/var/log/` or `~/Library/Logs/` | `./logs/` |
+| **Logs** | `/usr/local/log/` or `~/Library/Logs/` | `./logs/` |
 
 ## 2. Setup Development Environment
 
@@ -23,7 +23,7 @@ The project is designed to support both development and production modes simulta
 cd ~/Documents/dev/Mac-Only/network-location-switcher
 
 # Run development setup (creates .venv in project directory)
-./setup.sh
+./install.sh
 
 # This creates:
 # - .venv/ directory with Python virtual environment
@@ -88,7 +88,7 @@ Temporarily stop production service to test development version.
 
 ```bash
 # Stop production service
-launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network-location-switcher-user.plist
+launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist
 
 # Run your development version
 python network-location-switcher.py
@@ -98,7 +98,7 @@ python network-location-switcher.py
 # Stop dev version (Ctrl+C)
 
 # Restart production service
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network-location-switcher-user.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist
 ```
 
 ### Option C: Install Dev Version as Separate Service
@@ -106,19 +106,19 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network-location-switche
 For longer-term testing, install development version as a separate service.
 
 ```bash
-# The repo includes network-location-switcher-development.plist for this
+# The repo includes network.location.switcher.development.plist for this
 
 # Copy to LaunchAgents
-cp network-location-switcher-development.plist ~/Library/LaunchAgents/
+cp network.location.switcher.development.plist ~/Library/LaunchAgents/
 
 # This service has label: com.user.network-location-switcher.development
 # Different from production: com.user.network-location-switcher
 
 # Stop production first (only one can run at a time)
-launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network-location-switcher-user.plist
+launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist
 
 # Start dev service
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network-location-switcher-development.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.development.plist
 
 # View dev logs (different from production logs)
 tail -f ./logs/network-location-switcher-stdout.log
@@ -137,7 +137,7 @@ The environments are isolated because:
    - Development: `./network-location-config.json`
 
 3. **Different log files**:
-   - Production: `/var/log/` or `~/Library/Logs/`
+   - Production: `/usr/local/log/` or `~/Library/Logs/`
    - Development: `./logs/`
 
 4. **Only one service can run at a time** (they both monitor the same network changes)
@@ -166,11 +166,11 @@ git add .
 git commit -m "Fix: your changes"
 
 # When ready to update production:
-./setup.sh --mode production
+./install.sh --mode production
 
 # Restart production service to pick up changes
-launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network-location-switcher-user.plist
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network-location-switcher-user.plist
+launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist
 ```
 
 ## 8. Helpful Development Commands
@@ -217,4 +217,4 @@ You can:
 - Test changes by running manually in a terminal
 - Only stop production when you want to test the dev version as a service
 
-The `setup.sh` script is smart enough to detect which mode you're in and set everything up accordingly. For low-priority fixes and cleanup, just use development mode and test manually without touching the production service at all!
+The `install.sh` script is smart enough to detect which mode you're in and set everything up accordingly. For low-priority fixes and cleanup, just use development mode and test manually without touching the production service at all!

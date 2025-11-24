@@ -8,7 +8,7 @@ Complete installation guide for setting up the network location switcher on a ne
 |--------|-------------|------------|
 | **Location** | Current directory | `/usr/local/bin` (or custom) |
 | **Virtual Env** | `./.venv` | `/usr/local/lib/network-location-switcher/.venv` |
-| **Logs** | `./logs/` | `/var/log/` |
+| **Logs** | `./logs/` | `/usr/local/log/` |
 | **Service Type** | User agent | System daemon or user agent |
 | **Permissions** | User only | System-wide or user |
 | **Dev Tools** | ✅ Pre-commit, linting | ❌ Minimal dependencies |
@@ -18,17 +18,17 @@ Complete installation guide for setting up the network location switcher on a ne
 ### **Default Production Setup** (installs to `/usr/local/`)
 
 ```bash
-./setup.sh --mode production
+./install.sh --mode production
 ```
 
 ### **Custom Installation Location**
 
 ```bash
 # Install to /opt/network-location-switcher
-./setup.sh --mode production --prefix /opt
+./install.sh --mode production --prefix /opt
 
 # Install to custom directories
-./setup.sh --mode production \
+./install.sh --mode production \
     --bin-dir /usr/local/bin \
     --lib-dir /opt/network-switcher
 ```
@@ -43,8 +43,8 @@ Complete installation guide for setting up the network location switcher on a ne
 ├── .venv/                                            # Virtual environment
 ├── network-location-switcher.py                     # Python script
 └── requirements-macos.txt                           # Dependencies
-/var/log/network-location-switcher-stdout.log        # Output logs
-/var/log/network-location-switcher-stderr.log        # Error logs
+/usr/local/log/network-location-switcher-stdout.log        # Output logs
+/usr/local/log/network-location-switcher-stderr.log        # Error logs
 ```
 
 ### **Custom Prefix** (`--prefix /opt`)
@@ -60,9 +60,9 @@ Complete installation guide for setting up the network location switcher on a ne
 ### **All Available Options**
 
 ```bash
-./setup.sh --help
+./install.sh --help
 
-Usage: ./setup.sh [OPTIONS]
+Usage: ./install.sh [OPTIONS]
 
 Options:
   --mode MODE           Installation mode: 'development' or 'production'
@@ -72,9 +72,9 @@ Options:
   --help, -h            Show help message
 
 Examples:
-  ./setup.sh                                    # Development setup
-  ./setup.sh --mode production                 # Production to /usr/local
-  ./setup.sh --mode production --prefix /opt   # Production to /opt
+  ./install.sh                                    # Development setup
+  ./install.sh --mode production                 # Production to /usr/local
+  ./install.sh --mode production --prefix /opt   # Production to /opt
 ```
 
 ## ⚡ Usage After Installation
@@ -93,10 +93,10 @@ network-location-switcher
 
 ```bash
 # Copy to system LaunchDaemons (requires sudo)
-sudo cp network-location-switcher-system.plist /Library/LaunchDaemons/
+sudo cp network.location.switcher.system.plist /Library/LaunchDaemons/
 
 # Load and start the service
-sudo launchctl bootstrap system /Library/LaunchDaemons/network-location-switcher-system.plist
+sudo launchctl bootstrap system /Library/LaunchDaemons/network.location.switcher.system.plist
 
 # Check status
 sudo launchctl list | grep network-location-switcher
@@ -106,10 +106,10 @@ sudo launchctl list | grep network-location-switcher
 
 ```bash
 # Copy to user LaunchAgents
-cp network-location-switcher-user.plist ~/Library/LaunchAgents/
+cp network.location.switcher.user.plist ~/Library/LaunchAgents/
 
 # Load and start the service
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network-location-switcher-user.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist
 
 # Check status
 launchctl list | grep network-location-switcher
@@ -124,14 +124,14 @@ launchctl list | grep network-location-switcher
 sudo launchctl list | grep network-location-switcher
 
 # Start
-sudo launchctl bootstrap system /Library/LaunchDaemons/network-location-switcher-system.plist
+sudo launchctl bootstrap system /Library/LaunchDaemons/network.location.switcher.system.plist
 
 # Stop
-sudo launchctl bootout system /Library/LaunchDaemons/network-location-switcher-system.plist
+sudo launchctl bootout system /Library/LaunchDaemons/network.location.switcher.system.plist
 
 # View logs
-sudo tail -f /var/log/network-location-switcher-stdout.log
-sudo tail -f /var/log/network-location-switcher-stderr.log
+sudo tail -f /usr/local/log/network-location-switcher-stdout.log
+sudo tail -f /usr/local/log/network-location-switcher-stderr.log
 ```
 
 ### **User Service Commands**
@@ -141,13 +141,13 @@ sudo tail -f /var/log/network-location-switcher-stderr.log
 launchctl list | grep network-location-switcher
 
 # Start
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network-location-switcher-user.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist
 
 # Stop
-launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network-location-switcher-user.plist
+launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist
 
 # View logs
-tail -f /var/log/network-location-switcher-stdout.log
+tail -f ~/Library/Logs/network-location-switcher-stdout.log
 ```
 
 ## 🛡️ Security & Permissions
@@ -163,7 +163,7 @@ tail -f /var/log/network-location-switcher-stdout.log
 
 - **Installation**: May require `sudo` for writing to `/usr/local/` or `/opt/`
 - **Runtime**: Runs as current user (for network configuration access)
-- **Log Files**: System logs in `/var/log/` may require `sudo` to read
+- **Log Files**: System logs in `/usr/local/log/` may require `sudo` to read
 
 ## 🔄 Updates & Maintenance
 
@@ -171,26 +171,26 @@ tail -f /var/log/network-location-switcher-stdout.log
 
 ```bash
 # Re-run setup to update
-./setup.sh --mode production
+./install.sh --mode production
 
 # Or to a different location
-./setup.sh --mode production --prefix /opt
+./install.sh --mode production --prefix /opt
 ```
 
 ### **Uninstalling**
 
 ```bash
 # Stop the service first
-sudo launchctl bootout system /Library/LaunchDaemons/network-location-switcher-system.plist
+sudo launchctl bootout system /Library/LaunchDaemons/network.location.switcher.system.plist
 # or
-launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network-location-switcher-user.plist
+launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist
 
 # Remove files
 sudo rm -rf /usr/local/lib/network-location-switcher
 sudo rm /usr/local/bin/network-location-switcher
-sudo rm /Library/LaunchDaemons/network-location-switcher-system.plist
+sudo rm /Library/LaunchDaemons/network.location.switcher.system.plist
 # or
-rm ~/Library/LaunchAgents/network-location-switcher-user.plist
+rm ~/Library/LaunchAgents/network.location.switcher.user.plist
 ```
 
 ## 🧪 Testing Production Installation
@@ -215,16 +215,16 @@ network-location-switcher  # Should start monitoring
 
 ```bash
 # Load service temporarily (for user service)
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network-location-switcher-user.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist
 
 # Check it's running
 launchctl list | grep network-location-switcher
 
 # View logs
-tail -f /var/log/network-location-switcher-stdout.log
+tail -f ~/Library/Logs/network-location-switcher-stdout.log
 
 # Unload when done testing
-launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network-location-switcher-user.plist
+launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist
 ```
 
 ## 📊 Comparison: Development vs Production
@@ -234,7 +234,7 @@ launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network-location-switcher-
 | **Path** | `./network-location-switcher.py` | `/usr/local/bin/network-location-switcher` |
 | **Activation** | `source ./activate.sh` | Not needed |
 | **Dependencies** | Dev tools included | Minimal |
-| **Logs** | `./logs/` | `/var/log/` |
+| **Logs** | `./logs/` | `/usr/local/log/` |
 | **Updates** | Edit files directly | Re-run installer |
 | **Service Type** | User LaunchAgent | System LaunchDaemon or User LaunchAgent |
 | **Use Case** | Development & testing | Production deployment |

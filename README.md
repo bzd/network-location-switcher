@@ -31,10 +31,11 @@ git clone https://github.com/bzd/network-location-switcher.git
 cd network-location-switcher
 
 # Create:
-#   1. runtime python virtual envinronment.
+#   1. runtime python virtual environment.
 #   2. plists for: development, user, and system.
 #   3. configuration file: network-location-config.json
-./setup.sh
+# HINT: Use the "--dry-run" switch to view what would be installed without any changes made
+./install.sh
 
 # Edit the newly created `network-location-config.json` file.  See CONFIG.md for details.
 # Each entry will have:
@@ -124,7 +125,7 @@ The network location switcher uses macOS's `SystemConfiguration` framework to mo
 ```
 network-location-switcher/
 ├── network-location-switcher.py    # Main application
-├── setup.sh                   # Installation script  
+├── install.sh                 # Installation script  
 ├── manager.sh                  # Development management
 ├── test.py                   # Configuration helper
 └── network-location-config.default.json  # Template

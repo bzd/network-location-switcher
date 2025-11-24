@@ -93,6 +93,7 @@ def load_config() -> dict[str, Any]:
 
     # Configuration file paths to try (in order of preference)
     script_dir = os.path.dirname(os.path.abspath(__file__))
+    username = os.environ.get("USER", os.environ.get("USERNAME", ""))
     config_paths = [
         # 1. Command line argument
         config_file_arg,
@@ -100,7 +101,9 @@ def load_config() -> dict[str, Any]:
         os.path.join(script_dir, "network-location-config.json"),
         # 3. User's home directory
         os.path.expanduser("~/.network-location-config.json"),
-        # 4. System-wide configuration
+        # 4. User-specific system configuration (for user mode installations)
+        f"/usr/local/etc/{username}/network-location-config.json" if username else None,
+        # 5. System-wide configuration
         "/usr/local/etc/network-location-config.json",
         "/etc/network-location-config.json",
     ]
@@ -175,7 +178,7 @@ def create_default_config(script_dir: str) -> dict[str, Any]:
         },
         "default_wifi_location": "Automatic",
         "ethernet_location": "Wired",
-        "log_file": "/var/log/network-location-switcher.log",
+        "log_file": "/usr/local/log/network-location-switcher.log",
     }
 
     try:
@@ -191,7 +194,7 @@ def create_default_config(script_dir: str) -> dict[str, Any]:
             "ssid_location_map": {},
             "default_wifi_location": "Automatic",
             "ethernet_location": "Wired",
-            "log_file": "/var/log/network-location-switcher.log",
+            "log_file": "/usr/local/log/network-location-switcher.log",
         }
 
 
@@ -202,7 +205,7 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
         "ssid_location_map": {},
         "default_wifi_location": "Automatic",
         "ethernet_location": "Wired",
-        "log_file": "/var/log/network-location-switcher.log",
+        "log_file": "/usr/local/log/network-location-switcher.log",
     }
 
     for key, default_value in defaults.items():

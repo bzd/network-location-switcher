@@ -4,7 +4,7 @@
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="$PROJECT_DIR/.venv"
 SERVICE_NAME="com.user.network-location-switcher.development"
-PLIST_FILENAME="network-location-switcher-development.plist"
+PLIST_FILENAME="network.location.switcher.development.plist"
 LAUNCH_DIR="$HOME/Library/LaunchAgents/"
 
 # Colors
@@ -51,7 +51,7 @@ check_venv() {
 
 cmd_setup() {
     log "Setting up virtual environment..."
-    ./setup.sh
+    ./install.sh
 }
 
 cmd_activate() {
