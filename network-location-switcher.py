@@ -398,6 +398,154 @@ def get_current_location() -> Optional[str]:
     return None
 
 
+def get_notifytool_path() -> Optional[str]:
+    """
+    Find the NotifyTool binary path.
+    Checks common installation locations.
+    """
+    # Common paths to check for NotifyTool
+    paths_to_check = [
+        # User's Application Support bundle (created by NotifyTool on first run)
+        os.path.expanduser(
+            "~/Library/Application Support/NotifyTool.app/Contents/MacOS/notifytool"
+        ),
+        # Local bin directory
+        "/usr/local/bin/notifytool",
+        # Same directory as this script
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "notifytool"),
+    ]
+
+    for path in paths_to_check:
+        if os.path.isfile(path) and os.access(path, os.X_OK):
+            return path
+    return None
+
+
+def send_notification_notifytool(
+    title: str, message: str, subtitle: Optional[str] = None
+) -> bool:
+    """
+    Send a notification using NotifyTool (native UserNotifications framework).
+    Returns True if successful, False otherwise.
+    """
+    notifytool_path = get_notifytool_path()
+    if not notifytool_path:
+        return False
+
+    try:
+        cmd = [notifytool_path, "--title", title, "--body", message]
+        if subtitle:
+            cmd += ["--subtitle", subtitle]
+
+        # Check if running as root (system service mode)
+        is_root = os.geteuid() == 0
+
+        if is_root:
+            # Running as system service - need to send notification to console user
+            console_user_output = run_command("/usr/bin/stat -f '%Su' /dev/console")
+            if console_user_output:
+                console_user = console_user_output.strip()
+                user_id_output = run_command(f"/usr/bin/id -u {console_user}")
+                if user_id_output:
+                    user_id = user_id_output.strip()
+                    # Use launchctl asuser to run notifytool as the console user
+                    subprocess.run(
+                        ["/bin/launchctl", "asuser", user_id] + cmd,
+                        check=False,
+                        capture_output=True,
+                    )
+                    return True
+
+        # Regular notification (user mode or fallback)
+        result = subprocess.run(cmd, check=False, capture_output=True)
+        return result.returncode == 0
+
+    except Exception as e:
+        log(f"NotifyTool failed: {e}")
+        return False
+
+
+def send_notification_osascript(title: str, message: str) -> bool:
+    """
+    Send a notification using osascript (AppleScript).
+    Fallback method when NotifyTool is not available.
+    Returns True if successful, False otherwise.
+    """
+    try:
+        # Escape special characters for AppleScript
+        title_escaped = title.replace('"', '\\"').replace("\\", "\\\\")
+        message_escaped = message.replace('"', '\\"').replace("\\", "\\\\")
+
+        script = (
+            f'display notification "{message_escaped}" '
+            f'with title "{title_escaped}" '
+            f'sound name "Glass"'
+        )
+
+        # Check if running as root (system service mode)
+        is_root = os.geteuid() == 0
+
+        if is_root:
+            # Running as system service - need to send notification to console user
+            console_user_output = run_command("/usr/bin/stat -f '%Su' /dev/console")
+            if console_user_output:
+                console_user = console_user_output.strip()
+                user_id_output = run_command(f"/usr/bin/id -u {console_user}")
+                if user_id_output:
+                    user_id = user_id_output.strip()
+                    subprocess.run(
+                        [
+                            "/bin/launchctl",
+                            "asuser",
+                            user_id,
+                            "/usr/bin/osascript",
+                            "-e",
+                            script,
+                        ],
+                        check=False,
+                        capture_output=True,
+                    )
+                    return True
+
+        # Regular notification (user mode or fallback)
+        subprocess.run(
+            ["/usr/bin/osascript", "-e", script],
+            check=False,
+            capture_output=True,
+        )
+        return True
+
+    except Exception as e:
+        log(f"osascript notification failed: {e}")
+        return False
+
+
+def send_notification(title: str, message: str, subtitle: Optional[str] = None) -> None:
+    """
+    Send a macOS notification using the best available method.
+
+    Tries NotifyTool first (native UserNotifications framework) for better
+    integration with Notification Center, Focus mode, and system settings.
+    Falls back to osascript if NotifyTool is not available.
+
+    Works for both user and system service modes:
+    - User mode: Runs as current user
+    - System mode: Detects console user and sends notification to their session
+
+    Args:
+        title: The notification title
+        message: The notification body text
+        subtitle: Optional subtitle (only supported by NotifyTool)
+    """
+    # Try NotifyTool first (preferred method)
+    if send_notification_notifytool(title, message, subtitle):
+        return
+
+    # Fall back to osascript
+    if not send_notification_osascript(title, message):
+        log(f"Could not send notification: {title} - {message}")
+
+
 def switch_location(target: str) -> None:
     """Switch to the specified network location if not already active."""
     current = get_current_location()
@@ -408,6 +556,10 @@ def switch_location(target: str) -> None:
                 ["/usr/sbin/networksetup", "-switchtolocation", target], check=True
             )  # throw exception error if fails
             log(f"Switched network location → {target}")
+            # Send notification for successful switch
+            send_notification(
+                "Network Location Switched", f"Switched to '{target}' network location"
+            )
         except Exception as e:
             log(f"Failed to switch to location '{target}': {e}")
     else:
