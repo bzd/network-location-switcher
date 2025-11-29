@@ -217,5 +217,5 @@ network-location-config.json
 activate.sh
 network-location-config*.json
 !network-location-config.default.json
-network-location*.plist
+*.plist
 _NOTES.txt
