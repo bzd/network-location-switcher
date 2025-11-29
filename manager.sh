@@ -113,6 +113,8 @@ cmd_status() {
     echo "═══════════════════════════════════════════════════════"
     echo "                   SERVICE STATUS"
     echo "═══════════════════════════════════════════════════════"
+    echo ""
+    echo "Checking system services requires administrator privileges..."
     
     # Check which mode is active
     local active_mode="none"
