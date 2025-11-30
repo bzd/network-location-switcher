@@ -49,12 +49,50 @@ def log(msg: str) -> None:
 def show_help() -> None:
     """Display help message."""
     print(__doc__)
-    print("Configuration file locations (searched in order):")
-    print("  1. Command line argument: network-location-switcher config.json")
+    print("Options:")
+    print("  --help, -h              Show this help message")
+    print("  --version, -v           Show version information")
+    print("  -c, --configuration_file FILE")
+    print("                          Use a specific configuration file")
+    print()
+    print("Test modes (for debugging and verification):")
+    print("  --test, -t [TYPE]       Run tests without starting the daemon")
+    print("                          Types: notification, network, location, all")
+    print(
+        "  --test-notification     Test sending a notification to Notification Center"
+    )
+    print("  --test-network          Test network detection (Wi-Fi SSID, Ethernet)")
+    print("  --test-location         Test location detection and switching")
+    print()
+    print("Configuration mode (use with --test to test specific installation):")
+    print("  --mode, -m MODE         Use config from a specific installation mode")
+    print("                          Modes: system, user, dev, auto")
+    print(
+        "                          system: /usr/local/etc/network-location-config.json"
+    )
+    print(
+        "                          user:   /usr/local/etc/$USER/network-location-config.json"
+    )
+    print(
+        "                          dev:    ./network-location-config.json (script dir)"
+    )
+    print("                          auto:   Search all locations (default)")
+    print()
+    print("Examples:")
+    print("  network-location-switcher --test notification")
+    print("  network-location-switcher --test --mode system")
+    print("  network-location-switcher --test --mode system notification")
+    print("  network-location-switcher -t -m user network")
+    print("  network-location-switcher -c /path/to/config.json")
+    print("  network-location-switcher -c /path/to/config.json --test")
+    print()
+    print("Configuration file locations (searched in order when mode=auto):")
+    print("  1. Explicit: -c /path/to/config.json")
     print("  2. Script directory: ./network-location-config.json")
     print("  3. User home: ~/.network-location-config.json")
-    print("  4. System-wide: /usr/local/etc/network-location-config.json")
-    print("  5. System: /etc/network-location-config.json")
+    print("  4. User-specific: /usr/local/etc/$USER/network-location-config.json")
+    print("  5. System-wide: /usr/local/etc/network-location-config.json")
+    print("  6. System: /etc/network-location-config.json")
     print()
     print("If no config file is found, a default one will be created.")
     print("Edit the config file to match your network setup.")
@@ -66,23 +104,150 @@ def show_version() -> None:
     print("macOS network location automation with external configuration")
 
 
+class TestMode:
+    """Enum-like class for test modes."""
+
+    NONE = "none"
+    NOTIFICATION = "notification"
+    NETWORK = "network"
+    LOCATION = "location"
+    ALL = "all"
+
+
+class ConfigMode:
+    """Enum-like class for config file modes."""
+
+    AUTO = "auto"  # Use default search order
+    SYSTEM = "system"  # Use /usr/local/etc/network-location-config.json
+    USER = "user"  # Use /usr/local/etc/{username}/network-location-config.json
+    DEV = "dev"  # Use script directory config
+
+
+# Global to track if we're in test mode (set during arg parsing)
+_test_mode: str = TestMode.NONE
+_config_mode: str = ConfigMode.AUTO
+
+
 def parse_args() -> Optional[str]:
-    """Parse command line arguments."""
-    if len(sys.argv) > 1:
-        arg = sys.argv[1]
+    """Parse command line arguments.
+
+    Supports formats:
+        script.py -c config_file
+        script.py --configuration_file config_file
+        script.py --test [type]
+        script.py --test --mode system [type]
+        script.py --mode user --test notification
+    """
+    global _test_mode, _config_mode
+
+    config_file: Optional[str] = None
+    i = 1
+
+    while i < len(sys.argv):
+        arg = sys.argv[i]
+
         if arg in ("--help", "-h", "help"):
             show_help()
             sys.exit(0)
         elif arg in ("--version", "-v", "version"):
             show_version()
             sys.exit(0)
+        elif arg in ("--configuration_file", "--config", "-c"):
+            # Explicit config file path
+            if i + 1 < len(sys.argv):
+                config_file = sys.argv[i + 1]
+                i += 1  # Skip the config file argument
+            else:
+                print(f"{arg} requires a file path argument")
+                sys.exit(1)
+        elif arg in ("--mode", "-m"):
+            # Config mode selection
+            if i + 1 < len(sys.argv):
+                mode = sys.argv[i + 1].lower()
+                if mode in ("system", "sys", "s"):
+                    _config_mode = ConfigMode.SYSTEM
+                elif mode in ("user", "usr", "u"):
+                    _config_mode = ConfigMode.USER
+                elif mode in ("dev", "development", "d"):
+                    _config_mode = ConfigMode.DEV
+                elif mode in ("auto", "a"):
+                    _config_mode = ConfigMode.AUTO
+                else:
+                    print(f"Unknown mode: {mode}")
+                    print("Available modes: system, user, dev, auto")
+                    sys.exit(1)
+                i += 1  # Skip the mode argument
+            else:
+                print("--mode requires an argument: system, user, dev, or auto")
+                sys.exit(1)
+        elif arg in ("--test", "-t"):
+            # Test mode - check for sub-command (skip if next arg is a flag)
+            if i + 1 < len(sys.argv) and not sys.argv[i + 1].startswith("-"):
+                test_type = sys.argv[i + 1].lower()
+                if test_type in ("notification", "notify", "n"):
+                    _test_mode = TestMode.NOTIFICATION
+                    i += 1  # Skip the test type argument
+                elif test_type in ("network", "net"):
+                    _test_mode = TestMode.NETWORK
+                    i += 1  # Skip the test type argument
+                elif test_type in ("location", "loc"):
+                    _test_mode = TestMode.LOCATION
+                    i += 1  # Skip the test type argument
+                elif test_type in ("all", "a"):
+                    _test_mode = TestMode.ALL
+                    i += 1  # Skip the test type argument
+                else:
+                    # Not a known test type, might be next flag - default to all
+                    _test_mode = TestMode.ALL
+            else:
+                # Default to all tests
+                _test_mode = TestMode.ALL
+        elif arg == "--test-notification":
+            _test_mode = TestMode.NOTIFICATION
+        elif arg == "--test-network":
+            _test_mode = TestMode.NETWORK
+        elif arg == "--test-location":
+            _test_mode = TestMode.LOCATION
         elif arg.startswith("-"):
             print(f"Unknown option: {arg}")
             print("Use --help for usage information.")
             sys.exit(1)
         else:
-            # Assume it's a config file path
-            return arg
+            print(f"Unexpected argument: {arg}")
+            print("Use -c or --configuration_file to specify a config file.")
+            print("Use --help for usage information.")
+            sys.exit(1)
+
+        i += 1
+
+    return config_file
+
+
+def get_config_mode() -> str:
+    """Return the current config mode."""
+    return _config_mode
+
+
+def get_test_mode() -> str:
+    """Return the current test mode."""
+    return _test_mode
+
+
+def get_config_path_for_mode(mode: str) -> Optional[str]:
+    """Get the config file path for a specific mode."""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    username = os.environ.get("USER", os.environ.get("USERNAME", ""))
+
+    if mode == ConfigMode.SYSTEM:
+        return "/usr/local/etc/network-location-config.json"
+    elif mode == ConfigMode.USER:
+        if username:
+            return f"/usr/local/etc/{username}/network-location-config.json"
+        print("Error: Cannot determine username for user mode config")
+        return None
+    elif mode == ConfigMode.DEV:
+        return os.path.join(script_dir, "network-location-config.json")
+    # AUTO mode uses search order
     return None
 
 
@@ -90,10 +255,36 @@ def load_config() -> dict[str, Any]:
     """Load configuration from external JSON file."""
     # Parse command line arguments
     config_file_arg = parse_args()
+    config_mode = get_config_mode()
 
     # Configuration file paths to try (in order of preference)
     script_dir = os.path.dirname(os.path.abspath(__file__))
     username = os.environ.get("USER", os.environ.get("USERNAME", ""))
+
+    # If a specific mode was requested, use that config path
+    if config_mode != ConfigMode.AUTO:
+        mode_config_path = get_config_path_for_mode(config_mode)
+        if mode_config_path:
+            if os.path.isfile(mode_config_path):
+                try:
+                    with open(mode_config_path) as f:
+                        config: dict[str, Any] = json.load(f)
+                        print(
+                            f"{time.strftime('%Y-%m-%d %H:%M:%S')} "
+                            f"Loaded configuration from: {mode_config_path} "
+                            f"(mode: {config_mode})"
+                        )
+                        return config
+                except (OSError, json.JSONDecodeError) as e:
+                    print(f"Error reading config file {mode_config_path}: {e}")
+                    sys.exit(1)
+            else:
+                print(
+                    f"Error: Config file not found for mode '{config_mode}': {mode_config_path}"
+                )
+                sys.exit(1)
+
+    # Standard search order
     config_paths = [
         # 1. Command line argument
         config_file_arg,
@@ -118,7 +309,7 @@ def load_config() -> dict[str, Any]:
         if os.path.isfile(config_path):
             try:
                 with open(config_path) as f:
-                    config: dict[str, Any] = json.load(f)
+                    config = json.load(f)
                     print(
                         f"{time.strftime('%Y-%m-%d %H:%M:%S')} "
                         f"Loaded configuration from: {config_path}"
@@ -246,6 +437,10 @@ SSID_LOCATION_MAP = CONFIG["ssid_location_map"]
 DEFAULT_WIFI_LOCATION = CONFIG["default_wifi_location"]
 ETHERNET_LOCATION = CONFIG["ethernet_location"]
 LOG_FILE = CONFIG["log_file"]
+
+# Check if we're in test mode (must be done after config is loaded
+# but before we define functions that need the config)
+_current_test_mode = get_test_mode()
 
 
 # Log startup information
@@ -398,6 +593,394 @@ def get_current_location() -> Optional[str]:
     return None
 
 
+def get_notifytool_path() -> Optional[str]:
+    """
+    Find the NotifyTool binary path.
+    Checks common installation locations.
+    """
+    # Common paths to check for NotifyTool
+    paths_to_check = [
+        # User's Application Support bundle (created by NotifyTool on first run)
+        os.path.expanduser(
+            "~/Library/Application Support/NotifyTool.app/Contents/MacOS/notifytool"
+        ),
+        # Local bin directory
+        "/usr/local/bin/notifytool",
+        # Same directory as this script
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "notifytool"),
+    ]
+
+    for path in paths_to_check:
+        if os.path.isfile(path) and os.access(path, os.X_OK):
+            return path
+    return None
+
+
+def send_notification_notifytool(
+    title: str, message: str, subtitle: Optional[str] = None
+) -> bool:
+    """
+    Send a notification using NotifyTool (native UserNotifications framework).
+    Returns True if successful, False otherwise.
+    """
+    notifytool_path = get_notifytool_path()
+    if not notifytool_path:
+        return False
+
+    try:
+        cmd = [notifytool_path, "--title", title, "--body", message]
+        if subtitle:
+            cmd += ["--subtitle", subtitle]
+
+        # Check if running as root (system service mode)
+        is_root = os.geteuid() == 0
+
+        if is_root:
+            # Running as system service - need to send notification to console user
+            console_user_output = run_command("/usr/bin/stat -f '%Su' /dev/console")
+            if console_user_output:
+                console_user = console_user_output.strip()
+                user_id_output = run_command(f"/usr/bin/id -u {console_user}")
+                if user_id_output:
+                    user_id = user_id_output.strip()
+                    # Use launchctl asuser to run notifytool as the console user
+                    subprocess.run(
+                        ["/bin/launchctl", "asuser", user_id] + cmd,
+                        check=False,
+                        capture_output=True,
+                    )
+                    return True
+
+        # Regular notification (user mode or fallback)
+        result = subprocess.run(cmd, check=False, capture_output=True)
+        return result.returncode == 0
+
+    except Exception as e:
+        log(f"NotifyTool failed: {e}")
+        return False
+
+
+def send_notification_osascript(title: str, message: str) -> bool:
+    """
+    Send a notification using osascript (AppleScript).
+    Fallback method when NotifyTool is not available.
+    Returns True if successful, False otherwise.
+    """
+    try:
+        # Escape special characters for AppleScript
+        title_escaped = title.replace('"', '\\"').replace("\\", "\\\\")
+        message_escaped = message.replace('"', '\\"').replace("\\", "\\\\")
+
+        script = (
+            f'display notification "{message_escaped}" '
+            f'with title "{title_escaped}" '
+            f'sound name "Glass"'
+        )
+
+        # Check if running as root (system service mode)
+        is_root = os.geteuid() == 0
+
+        if is_root:
+            # Running as system service - need to send notification to console user
+            console_user_output = run_command("/usr/bin/stat -f '%Su' /dev/console")
+            if console_user_output:
+                console_user = console_user_output.strip()
+                user_id_output = run_command(f"/usr/bin/id -u {console_user}")
+                if user_id_output:
+                    user_id = user_id_output.strip()
+                    subprocess.run(
+                        [
+                            "/bin/launchctl",
+                            "asuser",
+                            user_id,
+                            "/usr/bin/osascript",
+                            "-e",
+                            script,
+                        ],
+                        check=False,
+                        capture_output=True,
+                    )
+                return True
+
+        # Regular notification (user mode or fallback)
+        subprocess.run(
+            ["/usr/bin/osascript", "-e", script],
+            check=False,
+            capture_output=True,
+        )
+        return True
+
+    except Exception as e:
+        log(f"osascript notification failed: {e}")
+        return False
+
+
+def send_notification(title: str, message: str, subtitle: Optional[str] = None) -> None:
+    """
+    Send a macOS notification using the best available method.
+
+    Tries NotifyTool first (native UserNotifications framework) for better
+    integration with Notification Center, Focus mode, and system settings.
+    Falls back to osascript if NotifyTool is not available.
+
+    Works for both user and system service modes:
+    - User mode: Runs as current user
+    - System mode: Detects console user and sends notification to their session
+
+    Args:
+        title: The notification title
+        message: The notification body text
+        subtitle: Optional subtitle (only supported by NotifyTool)
+    """
+    # Try NotifyTool first (preferred method)
+    if send_notification_notifytool(title, message, subtitle):
+        return
+
+    # Fall back to osascript
+    if not send_notification_osascript(title, message):
+        log(f"Could not send notification: {title} - {message}")
+
+
+def run_test_notification() -> bool:
+    """
+    Test sending a notification to Notification Center.
+    Returns True if successful.
+    """
+    print("\n" + "=" * 60)
+    print("NOTIFICATION TEST")
+    print("=" * 60)
+
+    # Check for NotifyTool
+    notifytool_path = get_notifytool_path()
+    if notifytool_path:
+        print(f"✓ NotifyTool found: {notifytool_path}")
+    else:
+        print("✗ NotifyTool not found (will use osascript fallback)")
+        print("  Install NotifyTool for better Notification Center integration")
+
+    print("\nSending test notification...")
+
+    # Send a test notification
+    send_notification(
+        title="Network Location Switcher",
+        message="Test notification successful!",
+        subtitle="This is a test",
+    )
+
+    print("✓ Notification sent!")
+    print("\nCheck your Notification Center to verify the notification appeared.")
+    print("=" * 60)
+    return True
+
+
+def run_test_network() -> bool:
+    """
+    Test network detection functionality.
+    Returns True if successful.
+    """
+    print("\n" + "=" * 60)
+    print("NETWORK DETECTION TEST")
+    print("=" * 60)
+
+    # Test Wi-Fi interface detection
+    print("\n[Wi-Fi Interface]")
+    wifi_iface = get_wifi_interface()
+    if wifi_iface:
+        print(f"  ✓ Wi-Fi interface: {wifi_iface}")
+    else:
+        print("  ✗ No Wi-Fi interface found")
+
+    # Test Wi-Fi status
+    print("\n[Wi-Fi Status]")
+    wifi_is_active = wifi_active()
+    print(f"  Active: {'✓ Yes' if wifi_is_active else '✗ No'}")
+
+    # Test current SSID
+    print("\n[Current SSID]")
+    ssid = get_current_ssid()
+    if ssid:
+        print(f"  ✓ Connected to: {ssid}")
+        # Check if SSID is in config
+        if ssid in SSID_LOCATION_MAP:
+            print(f"  ✓ Mapped to location: {SSID_LOCATION_MAP[ssid]}")
+        else:
+            print(f"  ⚠ Not in config (will use default: {DEFAULT_WIFI_LOCATION})")
+    else:
+        print("  ✗ Not connected to any Wi-Fi network")
+
+    # Test Ethernet detection
+    print("\n[Ethernet Status]")
+    ethernet_is_active = ethernet_active()
+    print(f"  Active: {'✓ Yes' if ethernet_is_active else '✗ No'}")
+
+    # Summary
+    print("\n[Connection Priority]")
+    if ethernet_is_active:
+        print(f"  → Would use Ethernet location: {ETHERNET_LOCATION}")
+    elif wifi_is_active and ssid:
+        target = SSID_LOCATION_MAP.get(ssid, DEFAULT_WIFI_LOCATION)
+        print(f"  → Would use Wi-Fi location: {target}")
+    else:
+        print(f"  → Would use default location: {DEFAULT_WIFI_LOCATION}")
+
+    print("=" * 60)
+    return True
+
+
+def run_test_location() -> bool:
+    """
+    Test location detection and display available locations.
+    Returns True if successful.
+    """
+    print("\n" + "=" * 60)
+    print("NETWORK LOCATION TEST")
+    print("=" * 60)
+
+    # Get current location
+    print("\n[Current Location]")
+    current = get_current_location()
+    if current:
+        print(f"  ✓ Active location: {current}")
+    else:
+        print("  ✗ Could not determine current location")
+
+    # List all available locations
+    print("\n[Available Locations]")
+    try:
+        output = subprocess.check_output(["/usr/sbin/scselect"], text=True)
+        for line in output.splitlines():
+            line = line.strip()
+            if line.startswith("*"):
+                # Active location
+                print(f"  → {line} (active)")
+            elif line and not line.startswith("Defined"):
+                print(f"    {line}")
+    except Exception as e:
+        print(f"  ✗ Could not list locations: {e}")
+
+    # Show configured mappings
+    print("\n[Configured SSID Mappings]")
+    if SSID_LOCATION_MAP:
+        for ssid, location in SSID_LOCATION_MAP.items():
+            print(f"  '{ssid}' → '{location}'")
+    else:
+        print("  (no SSID mappings configured)")
+
+    print("\n[Default Locations]")
+    print(f"  Default Wi-Fi: {DEFAULT_WIFI_LOCATION}")
+    print(f"  Ethernet: {ETHERNET_LOCATION}")
+
+    print("=" * 60)
+    return True
+
+
+def run_test_config() -> bool:
+    """
+    Display which configuration file is being used.
+    Returns True always (informational only).
+    """
+    print("\n" + "=" * 60)
+    print("CONFIGURATION")
+    print("=" * 60)
+
+    config_mode = get_config_mode()
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    username = os.environ.get("USER", os.environ.get("USERNAME", ""))
+
+    # Show mode if explicitly set
+    if config_mode != ConfigMode.AUTO:
+        mode_path = get_config_path_for_mode(config_mode)
+        print(f"\n[Config Mode: {config_mode}]")
+        print(f"  ✓ Using: {mode_path}")
+    else:
+        # Show which config file was loaded from search order
+        config_paths = [
+            (
+                "Script directory (dev)",
+                os.path.join(script_dir, "network-location-config.json"),
+            ),
+            ("User home", os.path.expanduser("~/.network-location-config.json")),
+            (
+                "User-specific (user)",
+                (
+                    f"/usr/local/etc/{username}/network-location-config.json"
+                    if username
+                    else None
+                ),
+            ),
+            ("System-wide (system)", "/usr/local/etc/network-location-config.json"),
+            ("System", "/etc/network-location-config.json"),
+        ]
+
+        print("\n[Config Mode: auto]")
+        print("[Config File Search Order]")
+        loaded_path = None
+        for label, path in config_paths:
+            if path is None:
+                continue
+            exists = os.path.isfile(path)
+            if exists and loaded_path is None:
+                loaded_path = path
+                print(f"  ✓ {label}: {path}")
+                print("    └── THIS CONFIG IS BEING USED")
+            elif exists:
+                print(f"  ⚠ {label}: {path}")
+                print("    └── exists but not used (lower priority)")
+            else:
+                print(f"  ✗ {label}: {path}")
+
+        if not loaded_path:
+            print("\n  ⚠ No config file found - using defaults")
+
+    # Show config summary
+    print("\n[Loaded Configuration]")
+    print(f"  SSID mappings: {len(SSID_LOCATION_MAP)}")
+    for ssid, location in SSID_LOCATION_MAP.items():
+        print(f"    '{ssid}' → '{location}'")
+    print(f"  Default Wi-Fi location: {DEFAULT_WIFI_LOCATION}")
+    print(f"  Ethernet location: {ETHERNET_LOCATION}")
+    print(f"  Log file: {LOG_FILE}")
+
+    # Show tip if not using a specific mode
+    if config_mode == ConfigMode.AUTO:
+        print("\n[TIP] To test with a specific config, use --mode:")
+        print("  --mode system  (installed system service config)")
+        print("  --mode user    (installed user service config)")
+        print("  --mode dev     (development/script directory config)")
+
+    print("=" * 60)
+    return True
+
+
+def run_tests(test_mode: str) -> None:
+    """Run the specified tests and exit."""
+    print(f"\n{VERSION}")
+    print("Running in test mode...")
+
+    success = True
+
+    # Always show config info first
+    success = run_test_config() and success
+
+    if test_mode in (TestMode.ALL, TestMode.NETWORK):
+        success = run_test_network() and success
+
+    if test_mode in (TestMode.ALL, TestMode.LOCATION):
+        success = run_test_location() and success
+
+    if test_mode in (TestMode.ALL, TestMode.NOTIFICATION):
+        success = run_test_notification() and success
+
+    print("\n" + "=" * 60)
+    if success:
+        print("All tests completed successfully!")
+    else:
+        print("Some tests failed.")
+    print("=" * 60 + "\n")
+
+    sys.exit(0 if success else 1)
+
+
 def switch_location(target: str) -> None:
     """Switch to the specified network location if not already active."""
     current = get_current_location()
@@ -408,6 +991,10 @@ def switch_location(target: str) -> None:
                 ["/usr/sbin/networksetup", "-switchtolocation", target], check=True
             )  # throw exception error if fails
             log(f"Switched network location → {target}")
+            # Send notification for successful switch
+            send_notification(
+                "Network Location Switched", f"Switched to '{target}' network location"
+            )
         except Exception as e:
             log(f"Failed to switch to location '{target}': {e}")
     else:
@@ -440,6 +1027,11 @@ def network_changed(store: Any, changed_keys: Any, info: Any) -> None:
 # ──────────────────────────────────────────────
 # Main setup
 # ──────────────────────────────────────────────
+
+# Check for test mode before starting daemon
+if _current_test_mode != TestMode.NONE:
+    run_tests(_current_test_mode)
+    # run_tests calls sys.exit(), so we won't reach here
 
 # This line creates a dynamic store object using Apple's System
 # Configuration framework, which is the foundation for monitoring

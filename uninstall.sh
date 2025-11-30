@@ -76,11 +76,12 @@ uninstall_development() {
         success "Virtual environment removed"
     fi
     
-    # Remove logs directory
+    # Remove logs directory contents (but keep .gitkeep for version control)
     if [ -d "$PROJECT_DIR/logs" ]; then
-        log "Removing logs directory..."
-        rm -rf "$PROJECT_DIR/logs"
-        success "Logs directory removed"
+        log "Removing logs directory contents..."
+        find "$PROJECT_DIR/logs" -type f ! -name '.gitkeep' -delete
+        find "$PROJECT_DIR/logs" -mindepth 1 -type d -empty -delete
+        success "Logs directory contents removed"
     fi
     
     # Remove generated files
@@ -96,6 +97,9 @@ uninstall_development() {
             log "Removed: $file"
         fi
     done
+    
+    # Note: User configuration file is preserved at $PROJECT_DIR/network-location-config.json
+    # Remove it manually if desired: rm $PROJECT_DIR/network-location-config.json
     
     success "Development mode uninstalled"
 }
