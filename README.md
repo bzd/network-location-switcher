@@ -6,6 +6,8 @@
 
 Automatically switches macOS network locations based on connected Wi-Fi networks or Ethernet connections. This tool monitors network changes in real-time and seamlessly switches to the appropriate network location, making it perfect for users who work across multiple environments (home, office, coffee shops, etc.).
 
+Optionally uses NotifyTool for macOSX Notification Center notifications.  Install at anytime from: https://github.com/bzd/NotifyTool
+
 ## 🖥️ Supported OS
 
 - macOS 14.5+ (Sonoma)
