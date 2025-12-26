@@ -1,9 +1,10 @@
 #!/bin/bash
-# Management script for network-location-switcher virtual environment
+# Management script for network_loc_switcher virtual environment
 
-PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Get the project root directory (parent of scripts/)
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VENV_DIR="$PROJECT_DIR/.venv"
-SERVICE_NAME="com.user.network-location-switcher.development"
+SERVICE_NAME="com.user.network_loc_switcher.development"
 PLIST_FILENAME="network.location.switcher.development.plist"
 LAUNCH_DIR="$HOME/Library/LaunchAgents/"
 
@@ -102,9 +103,9 @@ cmd_status() {
     log "Checking service status..."
     
     # Define service names and plist locations
-    local DEV_SERVICE="com.user.network-location-switcher.development"
-    local USER_SERVICE="com.user.network-location-switcher"
-    local SYSTEM_SERVICE="com.system.network-location-switcher"
+    local DEV_SERVICE="com.user.network_loc_switcher.development"
+    local USER_SERVICE="com.user.network_loc_switcher"
+    local SYSTEM_SERVICE="com.system.network_loc_switcher"
     local DEV_PLIST="$HOME/Library/LaunchAgents/network.location.switcher.development.plist"
     local USER_PLIST="$HOME/Library/LaunchAgents/network.location.switcher.user.plist"
     local SYSTEM_PLIST="/Library/LaunchDaemons/network.location.switcher.system.plist"
@@ -236,9 +237,9 @@ cmd_status() {
                 ;;
         esac
         
-        log_main="$log_dir/network-location-switcher.log"
-        log_stdout="$log_dir/network-location-switcher-stdout.log"
-        log_stderr="$log_dir/network-location-switcher-stderr.log"
+        log_main="$log_dir/network_loc_switcher.log"
+        log_stdout="$log_dir/network_loc_switcher-stdout.log"
+        log_stderr="$log_dir/network_loc_switcher-stderr.log"
         
         echo "Log locations for ${active_mode} mode:"
         echo "  Directory: $log_dir"
@@ -248,32 +249,32 @@ cmd_status() {
         if [ -f "$log_main" ]; then
             local main_lines=$(wc -l < "$log_main" | tr -d ' ')
             local main_size=$(ls -lh "$log_main" | awk '{print $5}')
-            success "app log: network-location-switcher.log"
+            success "app log: network_loc_switcher.log"
             echo "  └── $main_lines lines, $main_size, last modified: $(stat -f '%Sm' -t '%Y-%m-%d %H:%M:%S' "$log_main")"
         else
-            echo -e "${BLUE}○${NC} app log: network-location-switcher.log ${YELLOW}(not found)${NC}"
+            echo -e "${BLUE}○${NC} app log: network_loc_switcher.log ${YELLOW}(not found)${NC}"
         fi
         
         # stdout log
         if [ -f "$log_stdout" ]; then
             local stdout_lines=$(wc -l < "$log_stdout" | tr -d ' ')
-            success "stdout:  network-location-switcher-stdout.log"
+            success "stdout:  network_loc_switcher-stdout.log"
             echo "  └── $stdout_lines lines, last modified: $(stat -f '%Sm' -t '%Y-%m-%d %H:%M:%S' "$log_stdout")"
         else
-            echo -e "${BLUE}○${NC} stdout:  network-location-switcher-stdout.log ${YELLOW}(not found)${NC}"
+            echo -e "${BLUE}○${NC} stdout:  network_loc_switcher-stdout.log ${YELLOW}(not found)${NC}"
         fi
         
         # stderr log
         if [ -f "$log_stderr" ]; then
             local stderr_lines=$(wc -l < "$log_stderr" | tr -d ' ')
             if [ "$stderr_lines" -gt 0 ]; then
-                warning "stderr:  network-location-switcher-stderr.log ($stderr_lines lines)"
+                warning "stderr:  network_loc_switcher-stderr.log ($stderr_lines lines)"
             else
-                success "stderr:  network-location-switcher-stderr.log (empty - no errors)"
+                success "stderr:  network_loc_switcher-stderr.log (empty - no errors)"
             fi
             echo "  └── last modified: $(stat -f '%Sm' -t '%Y-%m-%d %H:%M:%S' "$log_stderr")"
         else
-            echo -e "${BLUE}○${NC} stderr:  network-location-switcher-stderr.log ${YELLOW}(not found)${NC}"
+            echo -e "${BLUE}○${NC} stderr:  network_loc_switcher-stderr.log ${YELLOW}(not found)${NC}"
         fi
         
         echo ""
@@ -370,7 +371,7 @@ cmd_logs() {
     
     echo ""
     echo "=== System Logs ==="
-    log show --predicate 'subsystem contains "com.user.network-location-switcher.venv"' --last 1h
+    log show --predicate 'subsystem contains "com.user.network_loc_switcher.venv"' --last 1h
 }
 
 cmd_uninstall() {

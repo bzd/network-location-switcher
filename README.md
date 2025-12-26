@@ -4,9 +4,32 @@
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![macOS](https://img.shields.io/badge/platform-macOS-lightgrey.svg)](https://www.apple.com/macos/)
 
-Automatically switches macOS network locations based on connected Wi-Fi networks or Ethernet connections. This tool monitors network changes in real-time and seamlessly switches to the appropriate network location, making it perfect for users who work across multiple environments (home, office, coffee shops, etc.).
+**Network Location Switcher** is a tool that runs in the background and automatically switches macOS network locations based on changes in connected Wi-Fi networks or Ethernet connections.
 
-Optionally uses NotifyTool for macOSX Notification Center notifications.  Install at anytime from: https://github.com/bzd/NotifyTool
+This tool monitors network changes in real-time and seamlessly switches to the appropriate network location, making it perfect for users who work across multiple environments (home, office, coffee shops, etc.).
+
+For end user notifications, **Network Location Switcher**  optionally uses an auxiliary tool called **NotifyTool** for macOSX Notification Center notifications.  Install at anytime from: https://github.com/bzd/NotifyTool
+
+# Documentation
+
+Additional documentation is found in the sub folder "*docs*".
+
+* INSTALL.md : installation details
+* CONFIG.md : configuration options
+* DEVELOPMENT.md : development notes
+* PRODUCTION.md : running a production use case notes
+
+
+# Prerequisites
+
+1. *Network locations* must be created on the local macOS computer. Review the following Apple support documentation on how to create and use network locations:
+
+   1. [Use network locations on Mac](https://support.apple.com/en-us/105129)
+   1. [Manage network locations on Mac](https://support.apple.com/en-in/guide/mac-help/mchlp1175/mac)
+   1. [About networksetup in Remote Desktop](https://support.apple.com/en-in/guide/remote-desktop/apdd0c5a2d5/mac)
+
+This tool essentially automates the use of the Apple *networksetup* command to change your network locations based on [ ___SSID : network_location___ ] mapping pairs in a configuration file.
+
 
 ## 🖥️ Supported OS
 
@@ -23,51 +46,55 @@ Optionally uses NotifyTool for macOSX Notification Center notifications.  Instal
 - 🔌 **Ethernet Priority** - Automatically prioritizes wired over wireless
 - 🚀 **Multiple Deployment Modes** - Development, User, and System service modes
 
-## 🚀 Quick Start (DEVELOPMENT MODE)
+## 🚀 Quick Start
 
-NOTE: You must manually edit the created "network-location-config.json" file to map networks to locations.
+IMPORTANT NOTE: After installation, you MUST manually edit the newly created configuration file to map network SSIDs to network locations so the automation knows which network location to use for each SSID:
 
+    network-location-config.json
+
+Three installation modes are possible:
+
+* **USER** : single-user environment.  Active when that user logs in.
+* **SYSTEM** : multi-user environment.  Active after system boot.
+* **DEVELOPMENT** : development and debugging environment.  Manual install and launch.
+
+### Example: USER Install (per user install) 
 ```bash
 # Clone and install
-git clone https://github.com/bzd/network-location-switcher.git
-cd network-location-switcher
+git clone https://github.com/bzd/network_loc_switcher.git
+cd network_loc_switcher
 
 # Create:
 #   1. runtime python virtual environment.
 #   2. plists for: development, user, and system.
-#   3. configuration file: network-location-config.json
-# HINT: Use the "--dry-run" switch to view what would be installed without any changes made
-./install.sh
+#   3. default configuration file: network-location-config.json
+# HINT: Use the "--dry-run" switch to view what will be installed (no changes made)
+./scripts/install.sh --mode user
 
-# Edit the newly created `network-location-config.json` file.  See CONFIG.md for details.
+# Edit the newly created `network-location-config.json` file, which will be consulted
+# during network changes.  See CONFIG.md for details.
 # Each entry will have:
 #
-#    SSID_name : network_location_name
+#    SSID_name_1 : network_location_1
+#    SSID_name_2 : network_location_2
 #    ...
 #
 nano network-location-config.json
 
-# If needed, create new network locations.
+# If needed, manually create new network locations.
 # Replace '<network_location_name>' as needed
 networksetup -createlocation '<network_location_name>' populate
 
-# Test your environment and network configurations
-source ./activate.sh
-./test.py
-
-# Start monitoring
-./manager.sh install
-./manager.sh start
 ```
 
-> 📖 **For detailed installation and configuration of all modes, see [INSTALL.md](INSTALL.md)**
+> 📖 **For detailed installation and configuration of all modes, see [INSTALL.md](docs/INSTALL.md)**
 
 ## 📖 How It Works
 
 The network location switcher uses macOS's `SystemConfiguration` framework to monitor network changes in real-time. When a network state change is detected, it:
 
-1. **Identifies the connection** (Wi-Fi SSID or Ethernet)
-2. **Looks up the corresponding location** in your configuration
+1. **Identifies the connection** (Wi-Fi SSID, Ethernet, USB, etc.)
+2. **Looks up the corresponding network location** in your configuration
 3. **Switches to the appropriate network location** using `networksetup`
 4. **Logs the change** for monitoring
 
@@ -97,13 +124,13 @@ The network location switcher uses macOS's `SystemConfiguration` framework to mo
 - **Admin required:** ❌ No
 - **Location:** Project directory
 
-### 👤 User Mode (single-user, production) 
-- **Best for:** Personal daily use
+### 👤 User Mode (single-user) 
+- **Best for:** Personal daily use, affects single user ONLY
 - **Auto-start:** ✅ At user login
 - **Admin required:** ❌ No
 - **Location:** User-specific
 
-### 🖥️ System Mode (multi-user, production)
+### 🖥️ System Mode (multi-user)
 - **Best for:** Multi-user machines
 - **Auto-start:** ✅ At boot time
 - **Admin required:** ⚠️ Yes
@@ -118,19 +145,33 @@ The network location switcher uses macOS's `SystemConfiguration` framework to mo
 
 ## 📚 Documentation
 
-- **[INSTALL.md](INSTALL.md)** - Detailed installation and setup guide
-- **[CONFIG.md](CONFIG.md)** - Configuration reference and examples
-- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Development and contribution guide
+- **[INSTALL.md](docs/INSTALL.md)** - Detailed installation and setup guide
+- **[CONFIG.md](docs/CONFIG.md)** - Configuration reference and examples
+- **[DEVELOPMENT.md](docs/DEVELOPMENT.md)** - Development and contribution guide
 
 ## 🛠️ Project Structure
 
 ```
-network-location-switcher/
-├── network-location-switcher.py    # Main application
-├── install.sh                 # Installation script  
-├── manager.sh                  # Development management
-├── test.py                   # Configuration helper
-└── network-location-config.default.json  # Template
+network_loc_switcher/
+├── README.md                              # This file
+├── LICENSE                                # GPL v3 License
+├── pyproject.toml                         # Python project configuration
+├── requirements-macos.txt                 # macOS-specific dependencies
+├── network-location-config.default.json   # Configuration template
+├── test.py                                # Configuration test helper
+├── docs/                                  # Documentation
+│   ├── CONFIG.md                          # Configuration reference
+│   ├── DEVELOPMENT.md                     # Development guide
+│   ├── INSTALL.md                         # Installation guide
+│   └── PRODUCTION.md                      # Production deployment
+├── logs/                                  # Log files (gitignored)
+├── network_loc_switcher/             # Main Python package
+│   ├── __init__.py                        # Package initialization
+│   └── network_loc_switcher.py       # Main application
+└── scripts/                               # Shell scripts
+    ├── install.sh                         # Installation script
+    ├── manager.sh                         # Development management
+    └── uninstall.sh                       # Uninstallation script
 ```
 
 ## 📄 License

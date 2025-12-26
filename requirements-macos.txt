@@ -1,4 +1,4 @@
-# Native macOS requirements for network-location-switcher
+# Native macOS requirements for network_loc_switcher
 # Use this for venv installations on macOS
 
 # macOS System Configuration frameworks (required for native functionality)

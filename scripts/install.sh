@@ -4,7 +4,8 @@ set -e
 # Virtual Environment Setup Script for Network Location Switcher
 # Supports development, user, and system installation modes
 
-PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Get the project root directory (parent of scripts/)
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PYTHON_VERSION="python3"
 
 # Installation mode and paths
@@ -14,7 +15,7 @@ INSTALL_PREFIX="/usr/local"
 INSTALL_BIN_DIR=""
 INSTALL_LIB_DIR=""
 VENV_DIR=""
-SCRIPT_NAME="network-location-switcher"
+SCRIPT_NAME="network_loc_switcher"
 DRY_RUN=false  # Dry run mode - show what would be done without actually doing it
 PERMISSION_ERRORS=()  # Array to store permission errors for summary display
 DIRECTORY_GROUP_RESULT=""  # Variable to store directory group result (to avoid subshell issues)
@@ -58,7 +59,7 @@ usage() {
     echo "  --mode MODE           Installation mode: 'development', 'user', or 'system' (default: $DEFAULT_INSTALL_MODE)"
     echo "  --prefix PATH         Installation prefix for user/system modes (default: /usr/local)"
     echo "  --bin-dir PATH        Binary directory (default: PREFIX/bin)"
-    echo "  --lib-dir PATH        Library directory (default: PREFIX/lib/network-location-switcher)"
+    echo "  --lib-dir PATH        Library directory (default: PREFIX/lib/network_loc_switcher)"
     echo "  --dry-run             Show what would be installed without actually doing anything"
     echo "  --help, -h            Show this help message"
     echo ""
@@ -82,24 +83,24 @@ usage() {
     echo "Start/Stop/Remove LaunchAgent or LaunchDaemon:"
     echo ""
     echo "  System Service (runs as root):"
-    echo "    Check status:    sudo launchctl list | grep network-location-switcher"
+    echo "    Check status:    sudo launchctl list | grep network_loc_switcher"
     echo "    Start service:    sudo launchctl bootstrap system /Library/LaunchDaemons/network.location.switcher.system.plist"
-    echo "    Stop service:     sudo launchctl bootout system/com.system.network-location-switcher"
-    echo "    Remove service:   sudo launchctl bootout system/com.system.network-location-switcher"
+    echo "    Stop service:     sudo launchctl bootout system/com.system.network_loc_switcher"
+    echo "    Remove service:   sudo launchctl bootout system/com.system.network_loc_switcher"
     echo "                      sudo rm /Library/LaunchDaemons/network.location.switcher.system.plist"
     echo ""
     echo "  User Service (runs as current user):"
-    echo "    Check status:    launchctl list | grep network-location-switcher"
+    echo "    Check status:    launchctl list | grep network_loc_switcher"
     echo "    Start service:   launchctl bootstrap gui/\$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist"
-    echo "    Stop service:     launchctl bootout gui/\$(id -u)/com.user.network-location-switcher"
-    echo "    Remove service:   launchctl bootout gui/\$(id -u)/com.user.network-location-switcher"
+    echo "    Stop service:     launchctl bootout gui/\$(id -u)/com.user.network_loc_switcher"
+    echo "    Remove service:   launchctl bootout gui/\$(id -u)/com.user.network_loc_switcher"
     echo "                      rm ~/Library/LaunchAgents/network.location.switcher.user.plist"
     echo ""
     echo "  Development Service:"
-    echo "    Check status:    launchctl list | grep network-location-switcher"
+    echo "    Check status:    launchctl list | grep network_loc_switcher"
     echo "    Start service:   launchctl bootstrap gui/\$(id -u) ~/Library/LaunchAgents/network.location.switcher.development.plist"
-    echo "    Stop service:     launchctl bootout gui/\$(id -u)/com.development.network-location-switcher"
-    echo "    Remove service:   launchctl bootout gui/\$(id -u)/com.development.network-location-switcher"
+    echo "    Stop service:     launchctl bootout gui/\$(id -u)/com.development.network_loc_switcher"
+    echo "    Remove service:   launchctl bootout gui/\$(id -u)/com.development.network_loc_switcher"
     echo "                      rm ~/Library/LaunchAgents/network.location.switcher.development.plist"
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -109,19 +110,19 @@ usage() {
     echo "View log files to monitor activity:"
     echo ""
     echo "  System Service:"
-    echo "    sudo tail -f /usr/local/log/NetworkLocationSwitcher/network-location-switcher-*.log"
-    echo "    sudo tail -f /usr/local/log/NetworkLocationSwitcher/network-location-switcher-stdout.log"
-    echo "    sudo tail -f /usr/local/log/NetworkLocationSwitcher/network-location-switcher-stderr.log"
+    echo "    sudo tail -f /usr/local/log/NetworkLocationSwitcher/network_loc_switcher-*.log"
+    echo "    sudo tail -f /usr/local/log/NetworkLocationSwitcher/network_loc_switcher-stdout.log"
+    echo "    sudo tail -f /usr/local/log/NetworkLocationSwitcher/network_loc_switcher-stderr.log"
     echo ""
     echo "  User Service:"
-    echo "    tail -f ~/Library/Logs/NetworkLocationSwitcher/network-location-switcher-*.log"
-    echo "    tail -f ~/Library/Logs/NetworkLocationSwitcher/network-location-switcher-stdout.log"
-    echo "    tail -f ~/Library/Logs/NetworkLocationSwitcher/network-location-switcher-stderr.log"
+    echo "    tail -f ~/Library/Logs/NetworkLocationSwitcher/network_loc_switcher-*.log"
+    echo "    tail -f ~/Library/Logs/NetworkLocationSwitcher/network_loc_switcher-stdout.log"
+    echo "    tail -f ~/Library/Logs/NetworkLocationSwitcher/network_loc_switcher-stderr.log"
     echo ""
     echo "  Development Service:"
-    echo "    tail -f ./logs/network-location-switcher-*.log"
-    echo "    tail -f ./logs/network-location-switcher-stdout.log"
-    echo "    tail -f ./logs/network-location-switcher-stderr.log"
+    echo "    tail -f ./logs/network_loc_switcher-*.log"
+    echo "    tail -f ./logs/network_loc_switcher-stdout.log"
+    echo "    tail -f ./logs/network_loc_switcher-stderr.log"
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "Complete Removal"
@@ -496,7 +497,7 @@ create_venv() {
             set_directory_permissions "$lib_parent_dir" "$dir_group" "lib parent directory"
         fi
         
-        # Create /usr/local/bin, /usr/local/lib/network-location-switcher, and /usr/local/etc directories
+        # Create /usr/local/bin, /usr/local/lib/network_loc_switcher, and /usr/local/etc directories
         local etc_dir="$INSTALL_PREFIX/etc"
         
         if [[ "$DRY_RUN" == true ]]; then
@@ -692,14 +693,14 @@ update_config_log_path() {
     local log_path
     
     if [[ "$INSTALL_MODE" == "development" ]]; then
-        log_path="$PROJECT_DIR/logs/NetworkLocationSwitcher/network-location-switcher.log"
+        log_path="$PROJECT_DIR/logs/NetworkLocationSwitcher/network_loc_switcher.log"
         log "Setting development log path: $log_path"
     elif [[ "$INSTALL_MODE" == "system" ]]; then
-        log_path="/usr/local/log/NetworkLocationSwitcher/network-location-switcher.log"
+        log_path="/usr/local/log/NetworkLocationSwitcher/network_loc_switcher.log"
         log "Setting system log path: $log_path"
     else
         # User mode
-        log_path="$HOME/Library/Logs/NetworkLocationSwitcher/network-location-switcher.log"
+        log_path="$HOME/Library/Logs/NetworkLocationSwitcher/network_loc_switcher.log"
         log "Setting user log path: $log_path"
     fi
     
@@ -801,7 +802,7 @@ install_script_files() {
         local wrapper_script="$INSTALL_BIN_DIR/$SCRIPT_NAME"
         
         if [[ "$DRY_RUN" == true ]]; then
-            dry_run_log "Would copy: $PROJECT_DIR/network-location-switcher.py -> $INSTALL_LIB_DIR/"
+            dry_run_log "Would copy: $PROJECT_DIR/network_loc_switcher/network_loc_switcher.py -> $INSTALL_LIB_DIR/"
             dry_run_log "Would copy: $PROJECT_DIR/requirements-macos.txt -> $INSTALL_LIB_DIR/"
             dry_run_log "Would copy: $PROJECT_DIR/network-location-config.default.json -> $INSTALL_LIB_DIR/"
             if [ -f "$config_dir/network-location-config.json" ]; then
@@ -818,7 +819,7 @@ install_script_files() {
             # Use sudo if needed
             if [[ ! -w "$INSTALL_BIN_DIR" ]]; then
             # Copy Python script and config files to lib directory
-            sudo cp "$PROJECT_DIR/network-location-switcher.py" "$INSTALL_LIB_DIR/"
+            sudo cp "$PROJECT_DIR/network_loc_switcher/network_loc_switcher.py" "$INSTALL_LIB_DIR/"
             sudo cp "$PROJECT_DIR/requirements-macos.txt" "$INSTALL_LIB_DIR/"
             
             # Copy default template (always) to lib directory
@@ -849,20 +850,20 @@ install_script_files() {
             # Create wrapper script in bin directory
             sudo tee "$wrapper_script" > /dev/null << EOF
 #!/bin/bash
-# Production wrapper for network-location-switcher
+# Production wrapper for network_loc_switcher
 SCRIPT_DIR="$INSTALL_LIB_DIR"
 VENV_DIR="$VENV_DIR"
 
 # Activate virtual environment and run script
 source "\$VENV_DIR/bin/activate"
-exec "\$VENV_DIR/bin/python" "\$SCRIPT_DIR/network-location-switcher.py" "\$@"
+exec "\$VENV_DIR/bin/python" "\$SCRIPT_DIR/network_loc_switcher.py" "\$@"
 EOF
             
             sudo chmod +x "$wrapper_script"
             sudo chown "$USER:$(id -gn)" "$wrapper_script"
         else
             # Copy without sudo
-            cp "$PROJECT_DIR/network-location-switcher.py" "$INSTALL_LIB_DIR/"
+            cp "$PROJECT_DIR/network_loc_switcher/network_loc_switcher.py" "$INSTALL_LIB_DIR/"
             cp "$PROJECT_DIR/requirements-macos.txt" "$INSTALL_LIB_DIR/"
             
             # Copy default template (always) to lib directory
@@ -893,13 +894,13 @@ EOF
             # Create wrapper script
             cat > "$wrapper_script" << EOF
 #!/bin/bash
-# Production wrapper for network-location-switcher
+# Production wrapper for network_loc_switcher
 SCRIPT_DIR="$INSTALL_LIB_DIR"
 VENV_DIR="$VENV_DIR"
 
 # Activate virtual environment and run script
 source "\$VENV_DIR/bin/activate"
-exec "\$VENV_DIR/bin/python" "\$SCRIPT_DIR/network-location-switcher.py" "\$@"
+exec "\$VENV_DIR/bin/python" "\$SCRIPT_DIR/network_loc_switcher.py" "\$@"
 EOF
             
             chmod +x "$wrapper_script"
@@ -987,7 +988,7 @@ create_activation_script() {
     else
         cat > activate.sh << EOF
 #!/bin/bash
-# Activation script for network-location-switcher virtual environment
+# Activation script for network_loc_switcher virtual environment
 
 PROJECT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="\$PROJECT_DIR/.venv"
@@ -1012,7 +1013,7 @@ pip list --format=columns
 
 echo ""
 echo "🚀 Usage:"
-echo "  python network-location-switcher.py    # Run the network switcher"
+echo "  python network_loc_switcher.py    # Run the network switcher"
 echo "  pytest                                 # Run tests" 
 echo "  black .                                # Format code"
 echo "  ruff check .                          # Lint code"
@@ -1082,7 +1083,7 @@ create_production_system_plist() {
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.system.network-location-switcher</string>
+    <string>com.system.network_loc_switcher</string>
     
     <key>Program</key>
     <string>$exec_path</string>
@@ -1099,10 +1100,10 @@ create_production_system_plist() {
     </dict>
     
     <key>StandardOutPath</key>
-    <string>$log_dir/network-location-switcher-stdout.log</string>
+    <string>$log_dir/network_loc_switcher-stdout.log</string>
     
     <key>StandardErrorPath</key>
-    <string>$log_dir/network-location-switcher-stderr.log</string>
+    <string>$log_dir/network_loc_switcher-stderr.log</string>
     
     <key>WorkingDirectory</key>
     <string>$INSTALL_LIB_DIR</string>
@@ -1155,7 +1156,7 @@ create_production_user_plist() {
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.user.network-location-switcher</string>
+    <string>com.user.network_loc_switcher</string>
     
     <key>Program</key>
     <string>$exec_path</string>
@@ -1172,10 +1173,10 @@ create_production_user_plist() {
     </dict>
     
     <key>StandardOutPath</key>
-    <string>$log_dir/network-location-switcher-stdout.log</string>
+    <string>$log_dir/network_loc_switcher-stdout.log</string>
     
     <key>StandardErrorPath</key>
-    <string>$log_dir/network-location-switcher-stderr.log</string>
+    <string>$log_dir/network_loc_switcher-stderr.log</string>
     
     <key>WorkingDirectory</key>
     <string>$INSTALL_LIB_DIR</string>
@@ -1228,7 +1229,7 @@ create_development_plist() {
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.user.network-location-switcher.development</string>
+    <string>com.user.network_loc_switcher.development</string>
     
     <key>Program</key>
     <string>$exec_path</string>
@@ -1236,7 +1237,7 @@ create_development_plist() {
     <key>ProgramArguments</key>
     <array>
         <string>$exec_path</string>
-        <string>$INSTALL_LIB_DIR/network-location-switcher.py</string>
+        <string>$PROJECT_DIR/network_loc_switcher/network_loc_switcher.py</string>
     </array>
     
     <key>RunAtLoad</key>
@@ -1251,13 +1252,13 @@ create_development_plist() {
     </dict>
     
     <key>StandardOutPath</key>
-    <string>$log_dir/network-location-switcher-stdout.log</string>
+    <string>$log_dir/network_loc_switcher-stdout.log</string>
     
     <key>StandardErrorPath</key>
-    <string>$log_dir/network-location-switcher-stderr.log</string>
+    <string>$log_dir/network_loc_switcher-stderr.log</string>
     
     <key>WorkingDirectory</key>
-    <string>$INSTALL_LIB_DIR</string>
+    <string>$PROJECT_DIR</string>
     
     <!-- Use virtual environment's Python and PATH -->
     <key>EnvironmentVariables</key>
@@ -1267,7 +1268,7 @@ create_development_plist() {
         <key>VIRTUAL_ENV</key>
         <string>$VENV_DIR</string>
         <key>PYTHONPATH</key>
-        <string>$PROJECT_DIR</string>
+        <string>$PROJECT_DIR:$PROJECT_DIR/network_loc_switcher</string>
     </dict>
     
     <!-- Resource limits -->
@@ -1470,7 +1471,7 @@ show_summary() {
         echo "   Log path automatically configured for system service"
         echo "   Plist created: $PROJECT_DIR/network.location.switcher.system.plist"
         echo "   Plist destination: /Library/LaunchDaemons/network.location.switcher.system.plist"
-        echo "   System plist logs: /usr/local/log/NetworkLocationSwitcher/network-location-switcher-*.log"
+        echo "   System plist logs: /usr/local/log/NetworkLocationSwitcher/network_loc_switcher-*.log"
     elif [[ "$INSTALL_MODE" == "user" ]]; then
         echo "🚀 User Installation:"
         echo "   Binary: $INSTALL_BIN_DIR/$SCRIPT_NAME"
@@ -1478,7 +1479,7 @@ show_summary() {
         echo "   Config: $INSTALL_PREFIX/etc/$USER/network-location-config.json"
         echo "   Plist created: $PROJECT_DIR/network.location.switcher.user.plist"
         echo "   Plist destination: $HOME/Library/LaunchAgents/network.location.switcher.user.plist"
-        echo "   User plist logs: $HOME/Library/Logs/NetworkLocationSwitcher/network-location-switcher-*.log"
+        echo "   User plist logs: $HOME/Library/Logs/NetworkLocationSwitcher/network_loc_switcher-*.log"
     else
         echo ""
         echo "🚀 Next Steps:"
@@ -1487,7 +1488,7 @@ show_summary() {
         echo "   source ./activate.sh"
         echo ""
         echo "2. Test the installation:"
-        echo "   python network-location-switcher.py"
+        echo "   python network_loc_switcher.py"
         echo ""
         echo "3. Install as user service:"
         echo "   Plist created: $PROJECT_DIR/network.location.switcher.development.plist"
@@ -1526,7 +1527,7 @@ install_and_launch_service() {
         plist_name="network.location.switcher.system.plist"
         plist_source="$PROJECT_DIR/$plist_name"
         plist_dest="/Library/LaunchDaemons/$plist_name"
-        service_id="system/com.system.network-location-switcher"
+        service_id="system/com.system.network_loc_switcher"
         launch_cmd="sudo launchctl bootstrap system $plist_dest"
         stop_cmd="sudo launchctl bootout $service_id"
         remove_cmd="sudo rm $plist_dest"
@@ -1535,7 +1536,7 @@ install_and_launch_service() {
         plist_name="network.location.switcher.user.plist"
         plist_source="$PROJECT_DIR/$plist_name"
         plist_dest="$HOME/Library/LaunchAgents/$plist_name"
-        service_id="gui/$(id -u)/com.user.network-location-switcher"
+        service_id="gui/$(id -u)/com.user.network_loc_switcher"
         launch_cmd="launchctl bootstrap gui/$(id -u) $plist_dest"
         stop_cmd="launchctl bootout $service_id"
         remove_cmd="rm $plist_dest"
@@ -1591,7 +1592,7 @@ install_and_launch_service() {
                 success "Service launched successfully"
             else
                 # Check if service is already loaded
-                if sudo launchctl list | grep -q "com.system.network-location-switcher"; then
+                if sudo launchctl list | grep -q "com.system.network_loc_switcher"; then
                     warning "Service appears to already be running"
                     log "To restart, first stop it with: $stop_cmd"
                 else
@@ -1604,7 +1605,7 @@ install_and_launch_service() {
                 success "Service launched successfully"
             else
                 # Check if service is already loaded
-                if launchctl list | grep -q "com.user.network-location-switcher"; then
+                if launchctl list | grep -q "com.user.network_loc_switcher"; then
                     warning "Service appears to already be running"
                     log "To restart, first stop it with: $stop_cmd"
                 else
@@ -1643,9 +1644,9 @@ install_and_launch_service() {
     echo ""
     echo "To check service status:"
     if [[ "$INSTALL_MODE" == "system" ]]; then
-        echo "   sudo launchctl list | grep network-location-switcher"
+        echo "   sudo launchctl list | grep network_loc_switcher"
     else
-        echo "   launchctl list | grep network-location-switcher"
+        echo "   launchctl list | grep network_loc_switcher"
     fi
     echo ""
     echo "To stop the service:"
@@ -1681,11 +1682,11 @@ install_and_launch_service() {
     fi
     
     if [[ "$INSTALL_MODE" == "system" ]]; then
-        echo "   sudo launchctl list | grep network-location-switcher  # Check status"
-        echo "   sudo tail -f /usr/local/log/NetworkLocationSwitcher/network-location-switcher*.log  # View logs"
+        echo "   sudo launchctl list | grep network_loc_switcher  # Check status"
+        echo "   sudo tail -f /usr/local/log/NetworkLocationSwitcher/network_loc_switcher*.log  # View logs"
     else
-        echo "   launchctl list | grep network-location-switcher       # Check status"
-        echo "   tail -f ~/Library/Logs/NetworkLocationSwitcher/network-location-switcher*.log  # View logs"
+        echo "   launchctl list | grep network_loc_switcher       # Check status"
+        echo "   tail -f ~/Library/Logs/NetworkLocationSwitcher/network_loc_switcher*.log  # View logs"
     fi
     echo ""
 }

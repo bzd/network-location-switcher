@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Configuration test script for network-location-switcher
+Configuration test script for network_loc_switcher
 
 This script validates your configuration file and tests network detection
 without actually switching network locations.
@@ -10,7 +10,7 @@ import json
 import os
 import subprocess
 import sys
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 
 def load_and_validate_config(
@@ -95,7 +95,7 @@ def load_and_validate_config(
         "ethernet_location",
         "log_file",
     ]
-    missing_keys = []
+    missing_keys: list[str] = []
 
     for key in required_keys:
         if key not in config:
@@ -123,11 +123,14 @@ def create_config_from_template(template_path: str, output_path: str) -> None:
         template_config = json.load(f)
 
     # Remove template comments (keys starting with _)
-    clean_config = {}
+    clean_config: dict[str, Any] = {}
     for key, value in template_config.items():
         if not key.startswith("_"):
             if isinstance(value, dict):
-                clean_value = {k: v for k, v in value.items() if not k.startswith("_")}
+                value_dict = cast(dict[str, Any], value)
+                clean_value: dict[str, Any] = {
+                    k: v for k, v in value_dict.items() if not k.startswith("_")
+                }
                 clean_config[key] = clean_value
             else:
                 clean_config[key] = value
@@ -153,12 +156,12 @@ def test_network_locations(config: dict[str, Any]) -> bool:
         )
 
         # Check locations used in config
-        all_locations = set()
+        all_locations: set[str] = set()
         all_locations.add(config["default_wifi_location"])
         all_locations.add(config["ethernet_location"])
         all_locations.update(config["ssid_location_map"].values())
 
-        missing_locations = []
+        missing_locations: list[str] = []
         for location in all_locations:
             if location not in available_locations:
                 missing_locations.append(location)
@@ -387,7 +390,7 @@ def main() -> None:
     if passed == total:
         print("🎉 Configuration is ready for use!")
         print("\nTo start the network switcher:")
-        print(f"  python network-location-switcher.py {config_file}")
+        print(f"  python network_loc_switcher.py {config_file}")
     else:
         print("💥 Please fix the issues above before using " "the network switcher")
         sys.exit(1)

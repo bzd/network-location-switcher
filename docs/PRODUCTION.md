@@ -7,7 +7,7 @@ Complete installation guide for setting up the network location switcher on a ne
 | Aspect | Development | Production |
 |--------|-------------|------------|
 | **Location** | Current directory | `/usr/local/bin` (or custom) |
-| **Virtual Env** | `./.venv` | `/usr/local/lib/network-location-switcher/.venv` |
+| **Virtual Env** | `./.venv` | `/usr/local/lib/network_loc_switcher/.venv` |
 | **Logs** | `./logs/` | `/usr/local/log/` |
 | **Service Type** | User agent | System daemon or user agent |
 | **Permissions** | User only | System-wide or user |
@@ -24,7 +24,7 @@ Complete installation guide for setting up the network location switcher on a ne
 ### **Custom Installation Location**
 
 ```bash
-# Install to /opt/network-location-switcher
+# Install to /opt/network_loc_switcher
 ./install.sh --mode production --prefix /opt
 
 # Install to custom directories
@@ -38,20 +38,20 @@ Complete installation guide for setting up the network location switcher on a ne
 ### **Default Production Layout** (`--prefix /usr/local`)
 
 ```bash
-/usr/local/bin/network-location-switcher              # Executable wrapper script
-/usr/local/lib/network-location-switcher/             # Library directory
+/usr/local/bin/network_loc_switcher              # Executable wrapper script
+/usr/local/lib/network_loc_switcher/             # Library directory
 ├── .venv/                                            # Virtual environment
-├── network-location-switcher.py                     # Python script
+├── network_loc_switcher.py                     # Python script
 └── requirements-macos.txt                           # Dependencies
-/usr/local/log/network-location-switcher-stdout.log        # Output logs
-/usr/local/log/network-location-switcher-stderr.log        # Error logs
+/usr/local/log/network_loc_switcher-stdout.log        # Output logs
+/usr/local/log/network_loc_switcher-stderr.log        # Error logs
 ```
 
 ### **Custom Prefix** (`--prefix /opt`)
 
 ```bash
-/opt/bin/network-location-switcher                    # Executable wrapper
-/opt/lib/network-location-switcher/                  # Library directory
+/opt/bin/network_loc_switcher                    # Executable wrapper
+/opt/lib/network_loc_switcher/                  # Library directory
 ...
 ```
 
@@ -68,7 +68,7 @@ Options:
   --mode MODE           Installation mode: 'development' or 'production'
   --prefix PATH         Installation prefix (default: /usr/local)
   --bin-dir PATH        Binary directory (default: PREFIX/bin)
-  --lib-dir PATH        Library directory (default: PREFIX/lib/network-location-switcher)
+  --lib-dir PATH        Library directory (default: PREFIX/lib/network_loc_switcher)
   --help, -h            Show help message
 
 Examples:
@@ -83,10 +83,10 @@ Examples:
 
 ```bash
 # Production mode - use the installed binary
-network-location-switcher
+network_loc_switcher
 
 # Or with full path
-/usr/local/bin/network-location-switcher
+/usr/local/bin/network_loc_switcher
 ```
 
 ### **Installing as System Service** (runs at boot)
@@ -99,7 +99,7 @@ sudo cp network.location.switcher.system.plist /Library/LaunchDaemons/
 sudo launchctl bootstrap system /Library/LaunchDaemons/network.location.switcher.system.plist
 
 # Check status
-sudo launchctl list | grep network-location-switcher
+sudo launchctl list | grep network_loc_switcher
 ```
 
 ### **Installing as User Service** (runs at login)
@@ -112,7 +112,7 @@ cp network.location.switcher.user.plist ~/Library/LaunchAgents/
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist
 
 # Check status
-launchctl list | grep network-location-switcher
+launchctl list | grep network_loc_switcher
 ```
 
 ## 📋 Service Management
@@ -121,7 +121,7 @@ launchctl list | grep network-location-switcher
 
 ```bash
 # Status
-sudo launchctl list | grep network-location-switcher
+sudo launchctl list | grep network_loc_switcher
 
 # Start
 sudo launchctl bootstrap system /Library/LaunchDaemons/network.location.switcher.system.plist
@@ -130,15 +130,15 @@ sudo launchctl bootstrap system /Library/LaunchDaemons/network.location.switcher
 sudo launchctl bootout system /Library/LaunchDaemons/network.location.switcher.system.plist
 
 # View logs
-sudo tail -f /usr/local/log/network-location-switcher-stdout.log
-sudo tail -f /usr/local/log/network-location-switcher-stderr.log
+sudo tail -f /usr/local/log/network_loc_switcher-stdout.log
+sudo tail -f /usr/local/log/network_loc_switcher-stderr.log
 ```
 
 ### **User Service Commands**
 
 ```bash
 # Status
-launchctl list | grep network-location-switcher
+launchctl list | grep network_loc_switcher
 
 # Start
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist
@@ -147,7 +147,7 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network.location.switche
 launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist
 
 # View logs
-tail -f ~/Library/Logs/network-location-switcher-stdout.log
+tail -f ~/Library/Logs/network_loc_switcher-stdout.log
 ```
 
 ## 🛡️ Security & Permissions
@@ -186,8 +186,8 @@ sudo launchctl bootout system /Library/LaunchDaemons/network.location.switcher.s
 launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist
 
 # Remove files
-sudo rm -rf /usr/local/lib/network-location-switcher
-sudo rm /usr/local/bin/network-location-switcher
+sudo rm -rf /usr/local/lib/network_loc_switcher
+sudo rm /usr/local/bin/network_loc_switcher
 sudo rm /Library/LaunchDaemons/network.location.switcher.system.plist
 # or
 rm ~/Library/LaunchAgents/network.location.switcher.user.plist
@@ -199,16 +199,16 @@ rm ~/Library/LaunchAgents/network.location.switcher.user.plist
 
 ```bash
 # Test the executable
-network-location-switcher --help
+network_loc_switcher --help
 
 # Check dependencies
-/usr/local/lib/network-location-switcher/.venv/bin/python -c "
+/usr/local/lib/network_loc_switcher/.venv/bin/python -c "
 import SystemConfiguration, CoreFoundation
 print('✅ macOS frameworks loaded successfully')
 "
 
 # Test network detection
-network-location-switcher  # Should start monitoring
+network_loc_switcher  # Should start monitoring
 ```
 
 ### **Test Service Installation**
@@ -218,10 +218,10 @@ network-location-switcher  # Should start monitoring
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist
 
 # Check it's running
-launchctl list | grep network-location-switcher
+launchctl list | grep network_loc_switcher
 
 # View logs
-tail -f ~/Library/Logs/network-location-switcher-stdout.log
+tail -f ~/Library/Logs/network_loc_switcher-stdout.log
 
 # Unload when done testing
 launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist
@@ -231,7 +231,7 @@ launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.
 
 | Feature | Development | Production |
 |---------|-------------|------------|
-| **Path** | `./network-location-switcher.py` | `/usr/local/bin/network-location-switcher` |
+| **Path** | `./network_loc_switcher.py` | `/usr/local/bin/network_loc_switcher` |
 | **Activation** | `source ./activate.sh` | Not needed |
 | **Dependencies** | Dev tools included | Minimal |
 | **Logs** | `./logs/` | `/usr/local/log/` |

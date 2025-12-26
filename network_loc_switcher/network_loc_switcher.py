@@ -7,9 +7,9 @@ or Ethernet.
 Configuration is loaded from an external JSON file for maximum flexibility.
 
 Usage:
-    network-location-switcher [config_file]
-    network-location-switcher --help
-    network-location-switcher --version
+    network_loc_switcher [config_file]
+    network_loc_switcher --help
+    network_loc_switcher --version
 """
 
 # import re
@@ -79,12 +79,12 @@ def show_help() -> None:
     print("                          auto:   Search all locations (default)")
     print()
     print("Examples:")
-    print("  network-location-switcher --test notification")
-    print("  network-location-switcher --test --mode system")
-    print("  network-location-switcher --test --mode system notification")
-    print("  network-location-switcher -t -m user network")
-    print("  network-location-switcher -c /path/to/config.json")
-    print("  network-location-switcher -c /path/to/config.json --test")
+    print("  network_loc_switcher --test notification")
+    print("  network_loc_switcher --test --mode system")
+    print("  network_loc_switcher --test --mode system notification")
+    print("  network_loc_switcher -t -m user network")
+    print("  network_loc_switcher -c /path/to/config.json")
+    print("  network_loc_switcher -c /path/to/config.json --test")
     print()
     print("Configuration file locations (searched in order when mode=auto):")
     print("  1. Explicit: -c /path/to/config.json")
@@ -369,7 +369,7 @@ def create_default_config(script_dir: str) -> dict[str, Any]:
         },
         "default_wifi_location": "Automatic",
         "ethernet_location": "Wired",
-        "log_file": "/usr/local/log/network-location-switcher.log",
+        "log_file": "/usr/local/log/network_loc_switcher.log",
     }
 
     try:
@@ -385,7 +385,7 @@ def create_default_config(script_dir: str) -> dict[str, Any]:
             "ssid_location_map": {},
             "default_wifi_location": "Automatic",
             "ethernet_location": "Wired",
-            "log_file": "/usr/local/log/network-location-switcher.log",
+            "log_file": "/usr/local/log/network_loc_switcher.log",
         }
 
 
@@ -396,7 +396,7 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
         "ssid_location_map": {},
         "default_wifi_location": "Automatic",
         "ethernet_location": "Wired",
-        "log_file": "/usr/local/log/network-location-switcher.log",
+        "log_file": "/usr/local/log/network_loc_switcher.log",
     }
 
     for key, default_value in defaults.items():
@@ -423,9 +423,7 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
             log(f"Warning: Cannot create log directory {log_dir}: {e}")
             # Fall back to script directory
             script_dir = os.path.dirname(os.path.abspath(__file__))
-            config["log_file"] = os.path.join(
-                script_dir, "network-location-switcher.log"
-            )
+            config["log_file"] = os.path.join(script_dir, "network_loc_switcher.log")
             log(f"Using fallback log file: {config['log_file']}")
 
     return config

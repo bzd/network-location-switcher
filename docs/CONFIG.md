@@ -14,7 +14,7 @@ The network switcher now uses a **template-based configuration system**:
 ### **Configuration File Search Order**
 The script searches for configuration files in this order:
 
-1. **Command line argument**: `network-location-switcher config.json`
+1. **Command line argument**: `network_loc_switcher config.json`
 2. **Script directory**: `./network-location-config.json`
 3. **User home**: `~/.network-location-config.json`
 4. **System-wide**: `/usr/local/etc/network-location-config.json`
@@ -36,7 +36,7 @@ The script searches for configuration files in this order:
   },
   "default_wifi_location": "Automatic",
   "ethernet_location": "Wired", 
-  "log_file": "/usr/local/log/network-location-switcher.log"
+  "log_file": "/usr/local/log/network_loc_switcher.log"
 }
 ```
 
@@ -54,7 +54,7 @@ The script searches for configuration files in this order:
   },
   "default_wifi_location": "Automatic",
   "ethernet_location": "Wired",
-  "log_file": "/usr/local/log/network-location-switcher.log"
+  "log_file": "/usr/local/log/network_loc_switcher.log"
 }
 ```
 
@@ -83,11 +83,11 @@ The script searches for configuration files in this order:
 ### **log_file**
 - **Purpose**: Path where log messages are written
 - **Type**: String
-- **Default**: `"/usr/local/log/network-location-switcher.log"`
+- **Default**: `"/usr/local/log/network_loc_switcher.log"`
 - **Examples**: 
   - Development: `"./logs/network-switcher.log"`
-  - User logs: `"~/network-location-switcher.log"`
-  - System logs: `"/usr/local/log/network-location-switcher.log"`
+  - User logs: `"~/network_loc_switcher.log"`
+  - System logs: `"/usr/local/log/network_loc_switcher.log"`
 
 ## 🏠 Setup Examples
 
@@ -101,7 +101,7 @@ The script searches for configuration files in this order:
   },
   "default_wifi_location": "Automatic",
   "ethernet_location": "Home Wired",
-  "log_file": "~/network-location-switcher.log"
+  "log_file": "~/network_loc_switcher.log"
 }
 ```
 
@@ -115,7 +115,7 @@ The script searches for configuration files in this order:
   },
   "default_wifi_location": "Public",
   "ethernet_location": "Corporate Wired",
-  "log_file": "/usr/local/log/network-location-switcher.log"
+  "log_file": "/usr/local/log/network_loc_switcher.log"
 }
 ```
 
@@ -132,7 +132,7 @@ The script searches for configuration files in this order:
   },
   "default_wifi_location": "Public Safety",
   "ethernet_location": "Wired Connection", 
-  "log_file": "/usr/local/log/network-location-switcher.log"
+  "log_file": "/usr/local/log/network_loc_switcher.log"
 }
 ```
 
@@ -181,10 +181,10 @@ networksetup -listlocations
 ### **2. Test Configuration**
 ```bash
 # Run with specific config file
-./network-location-switcher config.json
+./network_loc_switcher config.json
 
 # Check logs
-tail -f /usr/local/log/network-location-switcher.log
+tail -f /usr/local/log/network_loc_switcher.log
 ```
 
 ### **3. Verify SSID Names**
@@ -220,7 +220,7 @@ sudo mkdir -p /usr/local/log
 sudo chmod 755 /usr/local/log
 
 # Or use user-writable location
-"log_file": "~/network-location-switcher.log"
+"log_file": "~/network_loc_switcher.log"
 ```
 
 ### **JSON Syntax Errors**

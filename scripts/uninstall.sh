@@ -4,8 +4,9 @@ set -e
 # Uninstall script for Network Location Switcher
 # Removes all files, directories, and services for a given installation mode
 
-PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SCRIPT_NAME="network-location-switcher"
+# Get the project root directory (parent of scripts/)
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPT_NAME="network_loc_switcher"
 
 # Colors for output
 RED='\033[0;31m'
@@ -48,10 +49,10 @@ uninstall_development() {
     log "Uninstalling development mode..."
     
     # Stop and remove service
-    local service_id="gui/$(id -u)/com.development.network-location-switcher"
+    local service_id="gui/$(id -u)/com.development.network_loc_switcher"
     local plist_path="$HOME/Library/LaunchAgents/network.location.switcher.development.plist"
     
-    if launchctl list | grep -q "com.development.network-location-switcher" 2>/dev/null; then
+    if launchctl list | grep -q "com.development.network_loc_switcher" 2>/dev/null; then
         log "Stopping development service..."
         launchctl bootout "$service_id" 2>/dev/null || true
         success "Service stopped"
@@ -112,11 +113,11 @@ uninstall_user() {
     local install_prefix="${INSTALL_PREFIX:-/usr/local}"
     local bin_dir="${install_prefix}/bin"
     local lib_dir="${install_prefix}/lib/${SCRIPT_NAME}"
-    local service_id="gui/$(id -u)/com.user.network-location-switcher"
+    local service_id="gui/$(id -u)/com.user.network_loc_switcher"
     local plist_path="$HOME/Library/LaunchAgents/network.location.switcher.user.plist"
     
     # Stop and remove service
-    if launchctl list | grep -q "com.user.network-location-switcher" 2>/dev/null; then
+    if launchctl list | grep -q "com.user.network_loc_switcher" 2>/dev/null; then
         log "Stopping user service..."
         launchctl bootout "$service_id" 2>/dev/null || true
         success "Service stopped"
@@ -156,7 +157,7 @@ uninstall_user() {
     # Remove user logs (keep directory, just remove our logs)
     if [ -d "$HOME/Library/Logs" ]; then
         log "Removing log files..."
-        rm -f "$HOME/Library/Logs/network-location-switcher"*.log 2>/dev/null || true
+        rm -f "$HOME/Library/Logs/network_loc_switcher"*.log 2>/dev/null || true
         success "Log files removed"
     fi
     
@@ -182,11 +183,11 @@ uninstall_system() {
     local lib_dir="${install_prefix}/lib/${SCRIPT_NAME}"
     local etc_dir="${install_prefix}/etc"
     local log_dir="${install_prefix}/log"
-    local service_id="system/com.system.network-location-switcher"
+    local service_id="system/com.system.network_loc_switcher"
     local plist_path="/Library/LaunchDaemons/network.location.switcher.system.plist"
     
     # Stop and remove service
-    if sudo launchctl list | grep -q "com.system.network-location-switcher" 2>/dev/null; then
+    if sudo launchctl list | grep -q "com.system.network_loc_switcher" 2>/dev/null; then
         log "Stopping system service..."
         sudo launchctl bootout "$service_id" 2>/dev/null || true
         success "Service stopped"
@@ -218,7 +219,7 @@ uninstall_system() {
     # Remove log files (keep directory, just remove our logs)
     if [ -d "$log_dir" ]; then
         log "Removing log files..."
-        sudo rm -f "$log_dir/network-location-switcher"*.log 2>/dev/null || true
+        sudo rm -f "$log_dir/network_loc_switcher"*.log 2>/dev/null || true
         success "Log files removed"
     fi
     
