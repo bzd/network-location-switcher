@@ -7,24 +7,25 @@ The network location switcher now reads its configuration from an external JSON 
 ### **Automatic Configuration Creation**
 The network switcher now uses a **template-based configuration system**:
 
-1. **Template File**: `network-location-config.default.json` (included with installation)
-2. **User Config**: `network-location-config.json` (created from template when needed)
+1. **Template File**: `network-location-switcher.default.conf` (included with installation)
+2. **User Config**: `network-location-switcher.conf` (created from template when needed)
 3. **Automatic Setup**: If no user config exists, one is created from the template
 
 ### **Configuration File Search Order**
 The script searches for configuration files in this order:
 
-1. **Command line argument**: `network_loc_switcher config.json`
-2. **Script directory**: `./network-location-config.json`
-3. **User home**: `~/.network-location-config.json`
-4. **System-wide**: `/usr/local/etc/network-location-config.json`
-5. **System**: `/etc/network-location-config.json`
+1. **Command line argument**: `network_location_switcher config.json`
+2. **Script directory**: `./network-location-switcher.conf`
+3. **User home**: `~/.network-location-switcher.conf`
+4. **macOS App Support**: `~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.conf`
+5. **System-wide**: `/usr/local/etc/network-location-switcher.conf`
+6. **System**: `/etc/network-location-switcher.conf`
 
 ### **Template vs User Config**
 | File | Purpose | Edited by User? |
 |------|---------|----------------|
-| `network-location-config.default.json` | Template with examples and documentation | ❌ Never (overwritten on updates) |
-| `network-location-config.json` | Your actual network configuration | ✅ Yes (customize for your networks) |
+| `network-location-switcher.default.conf` | Template with examples and documentation | ❌ Never (overwritten on updates) |
+| `network-location-switcher.conf` | Your actual network configuration | ✅ Yes (customize for your networks) |
 
 ## 📋 Configuration Format
 
@@ -36,7 +37,7 @@ The script searches for configuration files in this order:
   },
   "default_wifi_location": "Automatic",
   "ethernet_location": "Wired", 
-  "log_file": "/usr/local/log/network_loc_switcher.log"
+  "log_file": "/usr/local/log/network_location_switcher.log"
 }
 ```
 
@@ -54,7 +55,7 @@ The script searches for configuration files in this order:
   },
   "default_wifi_location": "Automatic",
   "ethernet_location": "Wired",
-  "log_file": "/usr/local/log/network_loc_switcher.log"
+  "log_file": "/usr/local/log/network_location_switcher.log"
 }
 ```
 
@@ -83,11 +84,11 @@ The script searches for configuration files in this order:
 ### **log_file**
 - **Purpose**: Path where log messages are written
 - **Type**: String
-- **Default**: `"/usr/local/log/network_loc_switcher.log"`
+- **Default**: `"/usr/local/log/network_location_switcher.log"`
 - **Examples**: 
   - Development: `"./logs/network-switcher.log"`
-  - User logs: `"~/network_loc_switcher.log"`
-  - System logs: `"/usr/local/log/network_loc_switcher.log"`
+  - User logs: `"~/network_location_switcher.log"`
+  - System logs: `"/usr/local/log/network_location_switcher.log"`
 
 ## 🏠 Setup Examples
 
@@ -101,7 +102,7 @@ The script searches for configuration files in this order:
   },
   "default_wifi_location": "Automatic",
   "ethernet_location": "Home Wired",
-  "log_file": "~/network_loc_switcher.log"
+  "log_file": "~/network_location_switcher.log"
 }
 ```
 
@@ -115,7 +116,7 @@ The script searches for configuration files in this order:
   },
   "default_wifi_location": "Public",
   "ethernet_location": "Corporate Wired",
-  "log_file": "/usr/local/log/network_loc_switcher.log"
+  "log_file": "/usr/local/log/network_location_switcher.log"
 }
 ```
 
@@ -132,7 +133,7 @@ The script searches for configuration files in this order:
   },
   "default_wifi_location": "Public Safety",
   "ethernet_location": "Wired Connection", 
-  "log_file": "/usr/local/log/network_loc_switcher.log"
+  "log_file": "/usr/local/log/network_location_switcher.log"
 }
 ```
 
@@ -141,19 +142,19 @@ The script searches for configuration files in this order:
 ### **1. First-Time Setup**
 When you first run the network switcher:
 
-1. **Automatic Template Use**: If no config exists, one is created from `network-location-config.default.json`
+1. **Automatic Template Use**: If no config exists, one is created from `network-location-switcher.default.conf`
 2. **Clean Template**: Comments and examples are automatically removed from your config
-3. **Ready to Edit**: Your new `network-location-config.json` contains clean, editable settings
+3. **Ready to Edit**: Your new `network-location-switcher.conf` contains clean, editable settings
 
 ### **2. Manual Template Creation**
 You can also create a config manually:
 
 ```bash
 # Copy and clean the template
-cp network-location-config.default.json network-location-config.json
+cp network-location-switcher.default.conf network-location-switcher.conf
 
 # Edit the new file to remove comments and add your networks
-nano network-location-config.json
+nano network-location-switcher.conf
 ```
 
 ### **3. Template Structure**
@@ -181,10 +182,10 @@ networksetup -listlocations
 ### **2. Test Configuration**
 ```bash
 # Run with specific config file
-./network_loc_switcher config.json
+./network_location_switcher config.json
 
 # Check logs
-tail -f /usr/local/log/network_loc_switcher.log
+tail -f /usr/local/log/network_location_switcher.log
 ```
 
 ### **3. Verify SSID Names**
@@ -220,7 +221,7 @@ sudo mkdir -p /usr/local/log
 sudo chmod 755 /usr/local/log
 
 # Or use user-writable location
-"log_file": "~/network_loc_switcher.log"
+"log_file": "~/network_location_switcher.log"
 ```
 
 ### **JSON Syntax Errors**
@@ -242,7 +243,7 @@ sudo chmod 755 /usr/local/log
 ### **2. Backup Configuration**
 ```bash
 # Backup your working config
-cp network-location-config.json network-location-config.backup.json
+cp network-location-switcher.conf network-location-switcher.backup.conf
 ```
 
 ### **3. Version Control**

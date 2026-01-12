@@ -6,6 +6,11 @@ set -e
 
 # Get the project root directory (parent of scripts/)
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPTS_DIR="$PROJECT_DIR/scripts"
+
+# Source shared configuration
+source "$SCRIPTS_DIR/common.sh"
+
 PYTHON_VERSION="python3"
 
 # Installation mode and paths
@@ -15,34 +20,11 @@ INSTALL_PREFIX="/usr/local"
 INSTALL_BIN_DIR=""
 INSTALL_LIB_DIR=""
 VENV_DIR=""
-SCRIPT_NAME="network_loc_switcher"
 DRY_RUN=false  # Dry run mode - show what would be done without actually doing it
 PERMISSION_ERRORS=()  # Array to store permission errors for summary display
 DIRECTORY_GROUP_RESULT=""  # Variable to store directory group result (to avoid subshell issues)
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Logging function
-log() {
-    echo -e "${BLUE}[$(date '+%H:%M:%S')]${NC} $1"
-}
-
-success() {
-    echo -e "${GREEN}✅ $1${NC}"
-}
-
-warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
-}
-
-error() {
-    echo -e "${RED}❌ $1${NC}"
-}
+# Colors and logging functions are defined in common.sh
 
 # Dry run logging function
 dry_run_log() {
@@ -59,12 +41,12 @@ usage() {
     echo "  --mode MODE           Installation mode: 'development', 'user', or 'system' (default: $DEFAULT_INSTALL_MODE)"
     echo "  --prefix PATH         Installation prefix for user/system modes (default: /usr/local)"
     echo "  --bin-dir PATH        Binary directory (default: PREFIX/bin)"
-    echo "  --lib-dir PATH        Library directory (default: PREFIX/lib/network_loc_switcher)"
+    echo "  --lib-dir PATH        Library directory (default: PREFIX/lib/network_location_switcher)"
     echo "  --dry-run             Show what would be installed without actually doing anything"
     echo "  --help, -h            Show this help message"
     echo ""
     echo "Installation Modes:"
-    echo "  development           Install in current directory with .venv (for development)"
+    echo "  development           Install in current directory with venv (for development)"
     echo "  user                  Install to system directories, runs as user service (for user deployment)"
     echo "  system                Install to system directories, runs as system service (for system deployment)"
     echo ""
@@ -83,25 +65,25 @@ usage() {
     echo "Start/Stop/Remove LaunchAgent or LaunchDaemon:"
     echo ""
     echo "  System Service (runs as root):"
-    echo "    Check status:    sudo launchctl list | grep network_loc_switcher"
-    echo "    Start service:    sudo launchctl bootstrap system /Library/LaunchDaemons/network.location.switcher.system.plist"
-    echo "    Stop service:     sudo launchctl bootout system/com.system.network_loc_switcher"
-    echo "    Remove service:   sudo launchctl bootout system/com.system.network_loc_switcher"
-    echo "                      sudo rm /Library/LaunchDaemons/network.location.switcher.system.plist"
+    echo "    Check status:    sudo launchctl list | grep network_location_switcher"
+    echo "    Start service:    sudo launchctl bootstrap system /Library/LaunchDaemons/${PLIST_BASE_NAME}.system.plist"
+    echo "    Stop service:     sudo launchctl bootout system/${SERVICE_LABEL_BASE}.system"
+    echo "    Remove service:   sudo launchctl bootout system/${SERVICE_LABEL_BASE}.system"
+    echo "                      sudo rm /Library/LaunchDaemons/${PLIST_BASE_NAME}.system.plist"
     echo ""
     echo "  User Service (runs as current user):"
-    echo "    Check status:    launchctl list | grep network_loc_switcher"
-    echo "    Start service:   launchctl bootstrap gui/\$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist"
-    echo "    Stop service:     launchctl bootout gui/\$(id -u)/com.user.network_loc_switcher"
-    echo "    Remove service:   launchctl bootout gui/\$(id -u)/com.user.network_loc_switcher"
-    echo "                      rm ~/Library/LaunchAgents/network.location.switcher.user.plist"
+    echo "    Check status:    launchctl list | grep network_location_switcher"
+    echo "    Start service:   launchctl bootstrap gui/\$(id -u) ~/Library/LaunchAgents/${PLIST_BASE_NAME}.user.plist"
+    echo "    Stop service:     launchctl bootout gui/\$(id -u)/${SERVICE_LABEL_BASE}.user"
+    echo "    Remove service:   launchctl bootout gui/\$(id -u)/${SERVICE_LABEL_BASE}.user"
+    echo "                      rm ~/Library/LaunchAgents/${PLIST_BASE_NAME}.user.plist"
     echo ""
     echo "  Development Service:"
-    echo "    Check status:    launchctl list | grep network_loc_switcher"
-    echo "    Start service:   launchctl bootstrap gui/\$(id -u) ~/Library/LaunchAgents/network.location.switcher.development.plist"
-    echo "    Stop service:     launchctl bootout gui/\$(id -u)/com.development.network_loc_switcher"
-    echo "    Remove service:   launchctl bootout gui/\$(id -u)/com.development.network_loc_switcher"
-    echo "                      rm ~/Library/LaunchAgents/network.location.switcher.development.plist"
+    echo "    Check status:    launchctl list | grep network_location_switcher"
+    echo "    Start service:   launchctl bootstrap gui/\$(id -u) ~/Library/LaunchAgents/${PLIST_BASE_NAME}.development.plist"
+    echo "    Stop service:     launchctl bootout gui/\$(id -u)/${SERVICE_LABEL_BASE}.development"
+    echo "    Remove service:   launchctl bootout gui/\$(id -u)/${SERVICE_LABEL_BASE}.development"
+    echo "                      rm ~/Library/LaunchAgents/${PLIST_BASE_NAME}.development.plist"
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "Monitoring Activity"
@@ -110,19 +92,19 @@ usage() {
     echo "View log files to monitor activity:"
     echo ""
     echo "  System Service:"
-    echo "    sudo tail -f /usr/local/log/NetworkLocationSwitcher/network_loc_switcher-*.log"
-    echo "    sudo tail -f /usr/local/log/NetworkLocationSwitcher/network_loc_switcher-stdout.log"
-    echo "    sudo tail -f /usr/local/log/NetworkLocationSwitcher/network_loc_switcher-stderr.log"
+    echo "    sudo tail -f /usr/local/log/NetworkLocationSwitcher/network_location_switcher-*.log"
+    echo "    sudo tail -f /usr/local/log/NetworkLocationSwitcher/network_location_switcher-stdout.log"
+    echo "    sudo tail -f /usr/local/log/NetworkLocationSwitcher/network_location_switcher-stderr.log"
     echo ""
     echo "  User Service:"
-    echo "    tail -f ~/Library/Logs/NetworkLocationSwitcher/network_loc_switcher-*.log"
-    echo "    tail -f ~/Library/Logs/NetworkLocationSwitcher/network_loc_switcher-stdout.log"
-    echo "    tail -f ~/Library/Logs/NetworkLocationSwitcher/network_loc_switcher-stderr.log"
+    echo "    tail -f ~/Library/Logs/NetworkLocationSwitcher/network_location_switcher-*.log"
+    echo "    tail -f ~/Library/Logs/NetworkLocationSwitcher/network_location_switcher-stdout.log"
+    echo "    tail -f ~/Library/Logs/NetworkLocationSwitcher/network_location_switcher-stderr.log"
     echo ""
     echo "  Development Service:"
-    echo "    tail -f ./logs/network_loc_switcher-*.log"
-    echo "    tail -f ./logs/network_loc_switcher-stdout.log"
-    echo "    tail -f ./logs/network_loc_switcher-stderr.log"
+    echo "    tail -f ./logs/network_location_switcher-*.log"
+    echo "    tail -f ./logs/network_location_switcher-stdout.log"
+    echo "    tail -f ./logs/network_location_switcher-stderr.log"
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "Complete Removal"
@@ -180,34 +162,36 @@ parse_args() {
 setup_paths() {
     if [[ "$INSTALL_MODE" == "development" ]]; then
         # Development mode - use project directory
-        VENV_DIR="$PROJECT_DIR/.venv"
+        VENV_DIR="$PROJECT_DIR/venv"
         INSTALL_BIN_DIR="$PROJECT_DIR"
         INSTALL_LIB_DIR="$PROJECT_DIR"
         
         log "Development installation paths:"
         log "  Project: $PROJECT_DIR"
         log "  Virtual env: $VENV_DIR"
+    elif [[ "$INSTALL_MODE" == "user" ]]; then
+        # User mode - install to macOS Application Support directory
+        INSTALL_LIB_DIR="${INSTALL_LIB_DIR:-$HOME/Library/Application Support/NetworkLocationSwitcher}"
+        INSTALL_BIN_DIR="${INSTALL_BIN_DIR:-$INSTALL_PREFIX/bin}"
+        VENV_DIR="$INSTALL_LIB_DIR/venv"
+        
+        log "User installation paths:"
+        log "  Library: $INSTALL_LIB_DIR"
+        log "  Binary: $INSTALL_BIN_DIR/$SCRIPT_NAME"
+        log "  Virtual env: $VENV_DIR"
+        log "  Config: $INSTALL_LIB_DIR/${CONFIG_FILE}"
     else
-        # User or System mode - install to system directories
+        # System mode - install to system directories
         INSTALL_BIN_DIR="${INSTALL_BIN_DIR:-$INSTALL_PREFIX/bin}"
         INSTALL_LIB_DIR="${INSTALL_LIB_DIR:-$INSTALL_PREFIX/lib/$SCRIPT_NAME}"
-        VENV_DIR="$INSTALL_LIB_DIR/.venv"
+        VENV_DIR="$INSTALL_LIB_DIR/venv"
         
-        local mode_name="User"
-        if [[ "$INSTALL_MODE" == "system" ]]; then
-            mode_name="System"
-        fi
-        
-        log "$mode_name installation paths:"
+        log "System installation paths:"
         log "  Prefix: $INSTALL_PREFIX"
         log "  Binary: $INSTALL_BIN_DIR/$SCRIPT_NAME"
         log "  Library: $INSTALL_LIB_DIR"
         log "  Virtual env: $VENV_DIR"
-        if [[ "$INSTALL_MODE" == "system" ]]; then
-            log "  Config: $INSTALL_PREFIX/etc/network-location-config.json"
-        elif [[ "$INSTALL_MODE" == "user" ]]; then
-            log "  Config: $INSTALL_PREFIX/etc/$USER/network-location-config.json"
-        fi
+        log "  Config: $INSTALL_PREFIX/etc/${CONFIG_FILE}"
         
         # Check if we need sudo for installation
         if [[ ! -w "$INSTALL_PREFIX" ]]; then
@@ -456,8 +440,59 @@ create_venv() {
     log "Creating virtual environment at $VENV_DIR"
     
     # Create directories for user or system mode
-    if [[ "$INSTALL_MODE" == "user" || "$INSTALL_MODE" == "system" ]]; then
-        log "Creating installation directories..."
+    if [[ "$INSTALL_MODE" == "user" ]]; then
+        # User mode - library goes to ~/Library/Application Support (no sudo needed)
+        log "Creating user installation directories..."
+        
+        if [[ "$DRY_RUN" == true ]]; then
+            if [[ -d "$INSTALL_LIB_DIR" ]]; then
+                log "Found existing directory: $INSTALL_LIB_DIR"
+            else
+                dry_run_log "Would create directory: $INSTALL_LIB_DIR"
+            fi
+        else
+            # Create Application Support directory (user-writable, no sudo)
+            if [[ ! -d "$INSTALL_LIB_DIR" ]]; then
+                log "Creating library directory: $INSTALL_LIB_DIR"
+                mkdir -p "$INSTALL_LIB_DIR"
+            fi
+            
+            # Verify directory was created
+            if [[ ! -d "$INSTALL_LIB_DIR" ]]; then
+                error "Failed to create directory: $INSTALL_LIB_DIR"
+                exit 1
+            fi
+        fi
+        
+        # For the bin directory (/usr/local/bin), we may need sudo
+        if [[ ! -w "$INSTALL_BIN_DIR" ]] && [[ ! -d "$INSTALL_BIN_DIR" || ! -w "$(dirname "$INSTALL_BIN_DIR")" ]]; then
+            local need_sudo_bin=true
+            if ! sudo -n true 2>/dev/null; then
+                log "You may be prompted for your password to create $INSTALL_BIN_DIR..."
+            fi
+        else
+            local need_sudo_bin=false
+        fi
+        
+        if [[ "$DRY_RUN" == true ]]; then
+            if [[ -d "$INSTALL_BIN_DIR" ]]; then
+                log "Found existing directory: $INSTALL_BIN_DIR"
+            else
+                dry_run_log "Would create directory: $INSTALL_BIN_DIR"
+            fi
+        else
+            if [[ ! -d "$INSTALL_BIN_DIR" ]]; then
+                if [[ "$need_sudo_bin" == true ]]; then
+                    sudo mkdir -p "$INSTALL_BIN_DIR"
+                else
+                    mkdir -p "$INSTALL_BIN_DIR"
+                fi
+            fi
+        fi
+        
+    elif [[ "$INSTALL_MODE" == "system" ]]; then
+        # System mode - install to /usr/local directories
+        log "Creating system installation directories..."
         
         # Determine the group to use for directories
         determine_directory_group "$INSTALL_PREFIX"
@@ -474,7 +509,6 @@ create_venv() {
         fi
         
         # First, ensure /usr/local/lib exists and has correct permissions
-        # This must be done BEFORE creating subdirectories
         local lib_parent_dir="$INSTALL_PREFIX/lib"
         if [[ "$DRY_RUN" == true ]]; then
             if [[ -d "$lib_parent_dir" ]]; then
@@ -485,7 +519,6 @@ create_venv() {
                 dry_run_log "Would set ownership and permissions for $lib_parent_dir"
             fi
         else
-            # Ensure /usr/local/lib exists
             if [[ ! -d "$lib_parent_dir" ]]; then
                 if [[ "$need_sudo" == true ]]; then
                     sudo mkdir -p "$lib_parent_dir"
@@ -493,15 +526,13 @@ create_venv() {
                     mkdir -p "$lib_parent_dir"
                 fi
             fi
-            # Set permissions for /usr/local/lib FIRST (before creating subdirectories)
             set_directory_permissions "$lib_parent_dir" "$dir_group" "lib parent directory"
         fi
         
-        # Create /usr/local/bin, /usr/local/lib/network_loc_switcher, and /usr/local/etc directories
+        # Create /usr/local/bin, /usr/local/lib/network_location_switcher, and /usr/local/etc directories
         local etc_dir="$INSTALL_PREFIX/etc"
         
         if [[ "$DRY_RUN" == true ]]; then
-            # Check which directories already exist
             if [[ -d "$INSTALL_BIN_DIR" ]]; then
                 log "Found existing directory: $INSTALL_BIN_DIR"
             else
@@ -520,14 +551,12 @@ create_venv() {
                 dry_run_log "Would create directory: $etc_dir"
             fi
         else
-            # Create directories - /usr/local/lib should already have correct permissions
             if [[ "$need_sudo" == true ]]; then
                 sudo mkdir -p "$INSTALL_BIN_DIR" "$INSTALL_LIB_DIR" "$etc_dir"
             else
                 mkdir -p "$INSTALL_BIN_DIR" "$INSTALL_LIB_DIR" "$etc_dir"
             fi
             
-            # Verify INSTALL_LIB_DIR was created successfully
             if [[ ! -d "$INSTALL_LIB_DIR" ]]; then
                 error "Failed to create directory: $INSTALL_LIB_DIR"
                 exit 1
@@ -693,14 +722,14 @@ update_config_log_path() {
     local log_path
     
     if [[ "$INSTALL_MODE" == "development" ]]; then
-        log_path="$PROJECT_DIR/logs/NetworkLocationSwitcher/network_loc_switcher.log"
+        log_path="$PROJECT_DIR/logs/NetworkLocationSwitcher/network_location_switcher.log"
         log "Setting development log path: $log_path"
     elif [[ "$INSTALL_MODE" == "system" ]]; then
-        log_path="/usr/local/log/NetworkLocationSwitcher/network_loc_switcher.log"
+        log_path="/usr/local/log/NetworkLocationSwitcher/network_location_switcher.log"
         log "Setting system log path: $log_path"
     else
         # User mode
-        log_path="$HOME/Library/Logs/NetworkLocationSwitcher/network_loc_switcher.log"
+        log_path="$HOME/Library/Logs/NetworkLocationSwitcher/network_location_switcher.log"
         log "Setting user log path: $log_path"
     fi
     
@@ -752,49 +781,31 @@ install_script_files() {
         if [[ "$INSTALL_MODE" == "system" ]]; then
             config_dir="$INSTALL_PREFIX/etc"
         else
-            # User mode - config goes to /usr/local/etc/{username}
-            config_dir="$INSTALL_PREFIX/etc/$USER"
+            # User mode - config goes to ~/Library/Application Support/NetworkLocationSwitcher (macOS convention)
+            config_dir="$HOME/Library/Application Support/NetworkLocationSwitcher"
         fi
         
-        # Determine the group for setting config file permissions (for system/user modes)
+        # Determine the group for setting config file permissions (for system mode only)
         local config_group=""
-        if [[ "$INSTALL_MODE" == "system" || "$INSTALL_MODE" == "user" ]]; then
+        if [[ "$INSTALL_MODE" == "system" ]]; then
             determine_directory_group "$INSTALL_PREFIX"
             config_group="$DIRECTORY_GROUP_RESULT"
         fi
         
-        # For user mode, ensure the user-specific config directory exists with proper permissions
+        # For user mode, ensure the Application Support directory exists
         if [[ "$INSTALL_MODE" == "user" ]]; then
             if [[ "$DRY_RUN" == true ]]; then
                 if [[ -d "$config_dir" ]]; then
                     log "Found existing directory: $config_dir"
                 else
                     dry_run_log "Would create directory: $config_dir"
-                    dry_run_log "Would set ownership and permissions for $config_dir"
                 fi
             else
-                # Ensure /usr/local/etc exists first
-                local etc_parent="$INSTALL_PREFIX/etc"
-                if [[ ! -d "$etc_parent" ]]; then
-                    if [[ ! -w "$INSTALL_PREFIX" ]]; then
-                        sudo mkdir -p "$etc_parent"
-                    else
-                        mkdir -p "$etc_parent"
-                    fi
-                fi
-                
-                # Create user-specific directory if it doesn't exist
+                # Create Application Support directory if it doesn't exist
                 if [[ ! -d "$config_dir" ]]; then
                     log "Creating user config directory: $config_dir"
-                    if [[ ! -w "$etc_parent" ]]; then
-                        sudo mkdir -p "$config_dir"
-                    else
-                        mkdir -p "$config_dir"
-                    fi
+                    mkdir -p "$config_dir"
                 fi
-                
-                # Set ownership and permissions for the user config directory
-                set_directory_permissions "$config_dir" "$config_group" "user config directory"
             fi
         fi
         
@@ -802,16 +813,16 @@ install_script_files() {
         local wrapper_script="$INSTALL_BIN_DIR/$SCRIPT_NAME"
         
         if [[ "$DRY_RUN" == true ]]; then
-            dry_run_log "Would copy: $PROJECT_DIR/network_loc_switcher/network_loc_switcher.py -> $INSTALL_LIB_DIR/"
+            dry_run_log "Would copy: $PROJECT_DIR/network_location_switcher/network_location_switcher.py -> $INSTALL_LIB_DIR/"
             dry_run_log "Would copy: $PROJECT_DIR/requirements-macos.txt -> $INSTALL_LIB_DIR/"
-            dry_run_log "Would copy: $PROJECT_DIR/network-location-config.default.json -> $INSTALL_LIB_DIR/"
-            if [ -f "$config_dir/network-location-config.json" ]; then
-                log "Found existing configuration file at $config_dir/network-location-config.json"
+            dry_run_log "Would copy: $PROJECT_DIR/${CONFIG_FILE_DEFAULT} -> $INSTALL_LIB_DIR/"
+            if [ -f "$config_dir/${CONFIG_FILE}" ]; then
+                log "Found existing configuration file at $config_dir/${CONFIG_FILE}"
                 dry_run_log "Would preserve existing config and update log path"
-            elif [ -f "$PROJECT_DIR/network-location-config.json" ]; then
-                dry_run_log "Would copy: $PROJECT_DIR/network-location-config.json -> $config_dir/"
+            elif [ -f "$PROJECT_DIR/${CONFIG_FILE}" ]; then
+                dry_run_log "Would copy: $PROJECT_DIR/${CONFIG_FILE} -> $config_dir/"
             else
-                dry_run_log "Would create: $config_dir/network-location-config.json (from template)"
+                dry_run_log "Would create: $config_dir/${CONFIG_FILE} (from template)"
             fi
             dry_run_log "Would create wrapper script: $wrapper_script"
             dry_run_log "Would update log_file path in config file"
@@ -819,88 +830,90 @@ install_script_files() {
             # Use sudo if needed
             if [[ ! -w "$INSTALL_BIN_DIR" ]]; then
             # Copy Python script and config files to lib directory
-            sudo cp "$PROJECT_DIR/network_loc_switcher/network_loc_switcher.py" "$INSTALL_LIB_DIR/"
+            sudo cp "$PROJECT_DIR/network_location_switcher/network_location_switcher.py" "$INSTALL_LIB_DIR/"
             sudo cp "$PROJECT_DIR/requirements-macos.txt" "$INSTALL_LIB_DIR/"
             
             # Copy default template (always) to lib directory
-            sudo cp "$PROJECT_DIR/network-location-config.default.json" "$INSTALL_LIB_DIR/"
+            sudo cp "$PROJECT_DIR/${CONFIG_FILE_DEFAULT}" "$INSTALL_LIB_DIR/"
             
             # Handle config file - preserve existing if present, otherwise create from template or project
-            # For system mode, config goes to /usr/local/etc; for user mode, it goes to /usr/local/etc/{username}
-            if [ -f "$config_dir/network-location-config.json" ]; then
-                log "Preserving existing configuration file at $config_dir/network-location-config.json"
+            # For system mode, config goes to /usr/local/etc
+            # For user mode, config goes to ~/Library/Application Support/NetworkLocationSwitcher
+            if [ -f "$config_dir/${CONFIG_FILE}" ]; then
+                log "Preserving existing configuration file at $config_dir/${CONFIG_FILE}"
                 # Just update log path in existing config
-                update_config_log_path "$config_dir/network-location-config.json"
-            elif [ -f "$PROJECT_DIR/network-location-config.json" ]; then
-                sudo cp "$PROJECT_DIR/network-location-config.json" "$config_dir/"
+                update_config_log_path "$config_dir/${CONFIG_FILE}"
+            elif [ -f "$PROJECT_DIR/${CONFIG_FILE}" ]; then
+                sudo cp "$PROJECT_DIR/${CONFIG_FILE}" "$config_dir/"
                 log "Copied configuration from project directory to $config_dir"
                 # Make config file group-writable
-                sudo chmod g+w "$config_dir/network-location-config.json"
+                sudo chmod g+w "$config_dir/${CONFIG_FILE}"
                 # Update log path in copied config
-                update_config_log_path "$config_dir/network-location-config.json"
+                update_config_log_path "$config_dir/${CONFIG_FILE}"
             else
                 log "Creating new configuration from template in $config_dir"
-                sudo cp "$PROJECT_DIR/network-location-config.default.json" "$config_dir/network-location-config.json"
+                sudo cp "$PROJECT_DIR/${CONFIG_FILE_DEFAULT}" "$config_dir/${CONFIG_FILE}"
                 # Make config file group-writable
-                sudo chmod g+w "$config_dir/network-location-config.json"
+                sudo chmod g+w "$config_dir/${CONFIG_FILE}"
                 # Update log path in new config
-                update_config_log_path "$config_dir/network-location-config.json"
+                update_config_log_path "$config_dir/${CONFIG_FILE}"
             fi
             
             # Create wrapper script in bin directory
             sudo tee "$wrapper_script" > /dev/null << EOF
 #!/bin/bash
-# Production wrapper for network_loc_switcher
+# Production wrapper for network_location_switcher
 SCRIPT_DIR="$INSTALL_LIB_DIR"
 VENV_DIR="$VENV_DIR"
 
 # Activate virtual environment and run script
 source "\$VENV_DIR/bin/activate"
-exec "\$VENV_DIR/bin/python" "\$SCRIPT_DIR/network_loc_switcher.py" "\$@"
+exec "\$VENV_DIR/bin/python" "\$SCRIPT_DIR/network_location_switcher.py" "\$@"
 EOF
             
             sudo chmod +x "$wrapper_script"
             sudo chown "$USER:$(id -gn)" "$wrapper_script"
         else
             # Copy without sudo
-            cp "$PROJECT_DIR/network_loc_switcher/network_loc_switcher.py" "$INSTALL_LIB_DIR/"
+            cp "$PROJECT_DIR/network_location_switcher/network_location_switcher.py" "$INSTALL_LIB_DIR/"
             cp "$PROJECT_DIR/requirements-macos.txt" "$INSTALL_LIB_DIR/"
             
             # Copy default template (always) to lib directory
-            cp "$PROJECT_DIR/network-location-config.default.json" "$INSTALL_LIB_DIR/"
+            cp "$PROJECT_DIR/${CONFIG_FILE_DEFAULT}" "$INSTALL_LIB_DIR/"
             
             # Handle config file - preserve existing if present, otherwise create from template or project
-            # For system mode, config goes to /usr/local/etc; for user mode, it goes to /usr/local/etc/{username}
-            if [ -f "$config_dir/network-location-config.json" ]; then
-                log "Preserving existing configuration file at $config_dir/network-location-config.json"
+            # For system mode, config goes to /usr/local/etc
+            # For user mode, config goes to ~/Library/Application Support/NetworkLocationSwitcher
+            if [ -f "$config_dir/${CONFIG_FILE}" ]; then
+                log "Preserving existing configuration file at $config_dir/${CONFIG_FILE}"
                 # Just update log path in existing config
-                update_config_log_path "$config_dir/network-location-config.json"
-            elif [ -f "$PROJECT_DIR/network-location-config.json" ]; then
-                cp "$PROJECT_DIR/network-location-config.json" "$config_dir/"
+                update_config_log_path "$config_dir/${CONFIG_FILE}"
+            elif [ -f "$PROJECT_DIR/${CONFIG_FILE}" ]; then
+                cp "$PROJECT_DIR/${CONFIG_FILE}" "$config_dir/"
                 log "Copied configuration from project directory to $config_dir"
                 # Make config file group-writable
-                chmod g+w "$config_dir/network-location-config.json"
+                chmod g+w "$config_dir/${CONFIG_FILE}"
                 # Update log path in copied config
-                update_config_log_path "$config_dir/network-location-config.json"
+                update_config_log_path "$config_dir/${CONFIG_FILE}"
             else
                 log "Creating new configuration from template in $config_dir"
-                cp "$PROJECT_DIR/network-location-config.default.json" "$config_dir/network-location-config.json"
+                cp "$PROJECT_DIR/${CONFIG_FILE_DEFAULT}" "$config_dir/${CONFIG_FILE}"
                 # Make config file group-writable
-                chmod g+w "$config_dir/network-location-config.json"
+                chmod g+w "$config_dir/${CONFIG_FILE}"
                 # Update log path in new config
-                update_config_log_path "$config_dir/network-location-config.json"
+                update_config_log_path "$config_dir/${CONFIG_FILE}"
             fi
             
             # Create wrapper script
             cat > "$wrapper_script" << EOF
 #!/bin/bash
-# Production wrapper for network_loc_switcher
+# Production wrapper for network_location_switcher
 SCRIPT_DIR="$INSTALL_LIB_DIR"
 VENV_DIR="$VENV_DIR"
 
 # Activate virtual environment and run script
 source "\$VENV_DIR/bin/activate"
-exec "\$VENV_DIR/bin/python" "\$SCRIPT_DIR/network_loc_switcher.py" "\$@"
+exec "\$VENV_DIR/bin/python" "\$SCRIPT_DIR/network_location_switcher.py" "\$@"
 EOF
             
             chmod +x "$wrapper_script"
@@ -913,21 +926,21 @@ EOF
         log "Development mode - updating configuration for local logs"
         
         if [[ "$DRY_RUN" == true ]]; then
-            if [ -f "$PROJECT_DIR/network-location-config.json" ]; then
-                dry_run_log "Would update log_file path in: $PROJECT_DIR/network-location-config.json"
+            if [ -f "$PROJECT_DIR/${CONFIG_FILE}" ]; then
+                dry_run_log "Would update log_file path in: $PROJECT_DIR/${CONFIG_FILE}"
             else
-                dry_run_log "Would create: $PROJECT_DIR/network-location-config.json (from template)"
+                dry_run_log "Would create: $PROJECT_DIR/${CONFIG_FILE} (from template)"
                 dry_run_log "Would update log_file path in config file"
             fi
         else
             # Create or update config file for development
-            if [ -f "$PROJECT_DIR/network-location-config.json" ]; then
+            if [ -f "$PROJECT_DIR/${CONFIG_FILE}" ]; then
                 log "Updating existing user configuration for development"
-                update_config_log_path "$PROJECT_DIR/network-location-config.json"
+                update_config_log_path "$PROJECT_DIR/${CONFIG_FILE}"
             else
                 log "Creating user configuration from template for development"
-                cp "$PROJECT_DIR/network-location-config.default.json" "$PROJECT_DIR/network-location-config.json"
-                update_config_log_path "$PROJECT_DIR/network-location-config.json"
+                cp "$PROJECT_DIR/${CONFIG_FILE_DEFAULT}" "$PROJECT_DIR/${CONFIG_FILE}"
+                update_config_log_path "$PROJECT_DIR/${CONFIG_FILE}"
             fi
         fi
         
@@ -988,13 +1001,13 @@ create_activation_script() {
     else
         cat > activate.sh << EOF
 #!/bin/bash
-# Activation script for network_loc_switcher virtual environment
+# Activation script for network_location_switcher virtual environment
 
 PROJECT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
-VENV_DIR="\$PROJECT_DIR/.venv"
+VENV_DIR="\$PROJECT_DIR/venv"
 
 if [ ! -d "\$VENV_DIR" ]; then
-    echo "❌ Virtual environment not found. Run ./install.sh first"
+    echo "❌ Virtual environment not found. Run ./INSTALL.sh first"
     exit 1
 fi
 
@@ -1013,7 +1026,7 @@ pip list --format=columns
 
 echo ""
 echo "🚀 Usage:"
-echo "  python network_loc_switcher.py    # Run the network switcher"
+echo "  python network_location_switcher.py    # Run the network switcher"
 echo "  pytest                                 # Run tests" 
 echo "  black .                                # Format code"
 echo "  ruff check .                          # Lint code"
@@ -1035,19 +1048,19 @@ create_launchd_plist() {
         local plist_dest=""
         
         if [[ "$INSTALL_MODE" == "development" ]]; then
-            plist_name="network.location.switcher.development.plist"
+            plist_name="${PLIST_BASE_NAME}.development.plist"
             plist_source="$PROJECT_DIR/$plist_name"
             plist_dest="$HOME/Library/LaunchAgents/$plist_name"
             dry_run_log "Would create: $plist_source"
             dry_run_log "Would copy to: $plist_dest (cp $plist_name ~/Library/LaunchAgents/)"
         elif [[ "$INSTALL_MODE" == "system" ]]; then
-            plist_name="network.location.switcher.system.plist"
+            plist_name="${PLIST_BASE_NAME}.system.plist"
             plist_source="$PROJECT_DIR/$plist_name"
             plist_dest="/Library/LaunchDaemons/$plist_name"
             dry_run_log "Would create: $plist_source"
             dry_run_log "Would copy to: $plist_dest (sudo cp $plist_name /Library/LaunchDaemons/)"
         else
-            plist_name="network.location.switcher.user.plist"
+            plist_name="${PLIST_BASE_NAME}.user.plist"
             plist_source="$PROJECT_DIR/$plist_name"
             plist_dest="$HOME/Library/LaunchAgents/$plist_name"
             dry_run_log "Would create: $plist_source"
@@ -1069,7 +1082,7 @@ create_launchd_plist() {
 
 # Function to create production system service plist
 create_production_system_plist() {
-    local plist_name="network.location.switcher.system.plist"
+    local plist_name="${PLIST_BASE_NAME}.system.plist"
     local plist_source="$PROJECT_DIR/$plist_name"
     local plist_dest="/Library/LaunchDaemons/$plist_name"
     local log_dir="/usr/local/log/NetworkLocationSwitcher"
@@ -1083,7 +1096,7 @@ create_production_system_plist() {
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.system.network_loc_switcher</string>
+    <string>${SERVICE_LABEL_BASE}.system</string>
     
     <key>Program</key>
     <string>$exec_path</string>
@@ -1100,10 +1113,10 @@ create_production_system_plist() {
     </dict>
     
     <key>StandardOutPath</key>
-    <string>$log_dir/network_loc_switcher-stdout.log</string>
+    <string>$log_dir/network_location_switcher-stdout.log</string>
     
     <key>StandardErrorPath</key>
-    <string>$log_dir/network_loc_switcher-stderr.log</string>
+    <string>$log_dir/network_location_switcher-stderr.log</string>
     
     <key>WorkingDirectory</key>
     <string>$INSTALL_LIB_DIR</string>
@@ -1139,7 +1152,7 @@ EOF
 
 # Function to create production user service plist
 create_production_user_plist() {
-    local plist_name="network.location.switcher.user.plist"
+    local plist_name="${PLIST_BASE_NAME}.user.plist"
     local plist_source="$PROJECT_DIR/$plist_name"
     local plist_dest="$HOME/Library/LaunchAgents/$plist_name"
     local log_dir="$HOME/Library/Logs/NetworkLocationSwitcher"
@@ -1156,7 +1169,7 @@ create_production_user_plist() {
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.user.network_loc_switcher</string>
+    <string>${SERVICE_LABEL_BASE}.user</string>
     
     <key>Program</key>
     <string>$exec_path</string>
@@ -1173,10 +1186,10 @@ create_production_user_plist() {
     </dict>
     
     <key>StandardOutPath</key>
-    <string>$log_dir/network_loc_switcher-stdout.log</string>
+    <string>$log_dir/network_location_switcher-stdout.log</string>
     
     <key>StandardErrorPath</key>
-    <string>$log_dir/network_loc_switcher-stderr.log</string>
+    <string>$log_dir/network_location_switcher-stderr.log</string>
     
     <key>WorkingDirectory</key>
     <string>$INSTALL_LIB_DIR</string>
@@ -1212,7 +1225,7 @@ EOF
 
 # Function to create development plist
 create_development_plist() {
-    local plist_name="network.location.switcher.development.plist"
+    local plist_name="${PLIST_BASE_NAME}.development.plist"
     local plist_source="$PROJECT_DIR/$plist_name"
     local plist_dest="$HOME/Library/LaunchAgents/$plist_name"
     local log_dir="$PROJECT_DIR/logs/NetworkLocationSwitcher"
@@ -1229,7 +1242,7 @@ create_development_plist() {
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.user.network_loc_switcher.development</string>
+    <string>${SERVICE_LABEL_BASE}.development</string>
     
     <key>Program</key>
     <string>$exec_path</string>
@@ -1237,7 +1250,7 @@ create_development_plist() {
     <key>ProgramArguments</key>
     <array>
         <string>$exec_path</string>
-        <string>$PROJECT_DIR/network_loc_switcher/network_loc_switcher.py</string>
+        <string>$PROJECT_DIR/network_location_switcher/network_location_switcher.py</string>
     </array>
     
     <key>RunAtLoad</key>
@@ -1252,10 +1265,10 @@ create_development_plist() {
     </dict>
     
     <key>StandardOutPath</key>
-    <string>$log_dir/network_loc_switcher-stdout.log</string>
+    <string>$log_dir/network_location_switcher-stdout.log</string>
     
     <key>StandardErrorPath</key>
-    <string>$log_dir/network_loc_switcher-stderr.log</string>
+    <string>$log_dir/network_location_switcher-stderr.log</string>
     
     <key>WorkingDirectory</key>
     <string>$PROJECT_DIR</string>
@@ -1268,7 +1281,7 @@ create_development_plist() {
         <key>VIRTUAL_ENV</key>
         <string>$VENV_DIR</string>
         <key>PYTHONPATH</key>
-        <string>$PROJECT_DIR:$PROJECT_DIR/network_loc_switcher</string>
+        <string>$PROJECT_DIR:$PROJECT_DIR/network_location_switcher</string>
     </dict>
     
     <!-- Resource limits -->
@@ -1402,7 +1415,7 @@ create_logs_dir() {
         fi
         
         echo "System service plist will be created:"
-        echo "  - network.location.switcher.system.plist (for /Library/LaunchDaemons - logs to /usr/local/log/NetworkLocationSwitcher)"
+        echo "  - ${PLIST_BASE_NAME}.system.plist (for /Library/LaunchDaemons - logs to /usr/local/log/NetworkLocationSwitcher)"
         success "System logs configured"
     else
         # User mode
@@ -1423,7 +1436,7 @@ create_logs_dir() {
         fi
         
         echo "User service plist will be created:"
-        echo "  - network.location.switcher.user.plist (for ~/Library/LaunchAgents - logs to ~/Library/Logs/NetworkLocationSwitcher)"
+        echo "  - ${PLIST_BASE_NAME}.user.plist (for ~/Library/LaunchAgents - logs to ~/Library/Logs/NetworkLocationSwitcher)"
         success "User logs configured"
     fi
 }
@@ -1450,7 +1463,7 @@ show_summary() {
         fi
         
         echo "To install with mode '$INSTALL_MODE', run (without "--dry-run"):"
-        echo "   ./install.sh --mode $INSTALL_MODE"
+        echo "   ./INSTALL.sh --mode $INSTALL_MODE"
         echo ""
         return 0
     fi
@@ -1467,19 +1480,19 @@ show_summary() {
         echo "🚀 System Installation:"
         echo "   Binary: $INSTALL_BIN_DIR/$SCRIPT_NAME"
         echo "   Library: $INSTALL_LIB_DIR"
-        echo "   Config: $INSTALL_PREFIX/etc/network-location-config.json"
+        echo "   Config: $INSTALL_PREFIX/etc/${CONFIG_FILE}"
         echo "   Log path automatically configured for system service"
-        echo "   Plist created: $PROJECT_DIR/network.location.switcher.system.plist"
-        echo "   Plist destination: /Library/LaunchDaemons/network.location.switcher.system.plist"
-        echo "   System plist logs: /usr/local/log/NetworkLocationSwitcher/network_loc_switcher-*.log"
+        echo "   Plist created: $PROJECT_DIR/${PLIST_BASE_NAME}.system.plist"
+        echo "   Plist destination: /Library/LaunchDaemons/${PLIST_BASE_NAME}.system.plist"
+        echo "   System plist logs: /usr/local/log/NetworkLocationSwitcher/network_location_switcher-*.log"
     elif [[ "$INSTALL_MODE" == "user" ]]; then
         echo "🚀 User Installation:"
         echo "   Binary: $INSTALL_BIN_DIR/$SCRIPT_NAME"
         echo "   Library: $INSTALL_LIB_DIR"
-        echo "   Config: $INSTALL_PREFIX/etc/$USER/network-location-config.json"
-        echo "   Plist created: $PROJECT_DIR/network.location.switcher.user.plist"
-        echo "   Plist destination: $HOME/Library/LaunchAgents/network.location.switcher.user.plist"
-        echo "   User plist logs: $HOME/Library/Logs/NetworkLocationSwitcher/network_loc_switcher-*.log"
+        echo "   Config: $INSTALL_LIB_DIR/${CONFIG_FILE}"
+        echo "   Plist created: $PROJECT_DIR/${PLIST_BASE_NAME}.user.plist"
+        echo "   Plist destination: $HOME/Library/LaunchAgents/${PLIST_BASE_NAME}.user.plist"
+        echo "   User plist logs: $HOME/Library/Logs/NetworkLocationSwitcher/network_location_switcher-*.log"
     else
         echo ""
         echo "🚀 Next Steps:"
@@ -1488,13 +1501,13 @@ show_summary() {
         echo "   source ./activate.sh"
         echo ""
         echo "2. Test the installation:"
-        echo "   python network_loc_switcher.py"
+        echo "   python network_location_switcher.py"
         echo ""
         echo "3. Install as user service:"
-        echo "   Plist created: $PROJECT_DIR/network.location.switcher.development.plist"
-        echo "   Plist destination: $HOME/Library/LaunchAgents/network.location.switcher.development.plist"
-        echo "   cp network.location.switcher.development.plist ~/Library/LaunchAgents/"
-        echo "   launchctl bootstrap gui/\$(id -u) ~/Library/LaunchAgents/network.location.switcher.development.plist"
+        echo "   Plist created: $PROJECT_DIR/${PLIST_BASE_NAME}.development.plist"
+        echo "   Plist destination: $HOME/Library/LaunchAgents/${PLIST_BASE_NAME}.development.plist"
+        echo "   cp ${PLIST_BASE_NAME}.development.plist ~/Library/LaunchAgents/"
+        echo "   launchctl bootstrap gui/\$(id -u) ~/Library/LaunchAgents/${PLIST_BASE_NAME}.development.plist"
         echo "   Config: Log path automatically set to $PROJECT_DIR/logs/"
         echo ""
         echo "4. Development workflow:"
@@ -1524,19 +1537,19 @@ install_and_launch_service() {
     local service_installed=false
     
     if [[ "$INSTALL_MODE" == "system" ]]; then
-        plist_name="network.location.switcher.system.plist"
+        plist_name="${PLIST_BASE_NAME}.system.plist"
         plist_source="$PROJECT_DIR/$plist_name"
         plist_dest="/Library/LaunchDaemons/$plist_name"
-        service_id="system/com.system.network_loc_switcher"
+        service_id="system/${SERVICE_LABEL_BASE}.system"
         launch_cmd="sudo launchctl bootstrap system $plist_dest"
         stop_cmd="sudo launchctl bootout $service_id"
         remove_cmd="sudo rm $plist_dest"
     else
         # User mode
-        plist_name="network.location.switcher.user.plist"
+        plist_name="${PLIST_BASE_NAME}.user.plist"
         plist_source="$PROJECT_DIR/$plist_name"
         plist_dest="$HOME/Library/LaunchAgents/$plist_name"
-        service_id="gui/$(id -u)/com.user.network_loc_switcher"
+        service_id="gui/$(id -u)/${SERVICE_LABEL_BASE}.user"
         launch_cmd="launchctl bootstrap gui/$(id -u) $plist_dest"
         stop_cmd="launchctl bootout $service_id"
         remove_cmd="rm $plist_dest"
@@ -1552,9 +1565,9 @@ install_and_launch_service() {
     # Determine config file location
     local config_file
     if [[ "$INSTALL_MODE" == "system" ]]; then
-        config_file="$INSTALL_PREFIX/etc/network-location-config.json"
+        config_file="$INSTALL_PREFIX/etc/${CONFIG_FILE}"
     else
-        config_file="$INSTALL_PREFIX/etc/$USER/network-location-config.json"
+        config_file="$INSTALL_PREFIX/etc/$USER/${CONFIG_FILE}"
     fi
     echo "HINT: You may want to edit the network configuration file, $config_file, before launching the service."
     echo ""
@@ -1592,7 +1605,7 @@ install_and_launch_service() {
                 success "Service launched successfully"
             else
                 # Check if service is already loaded
-                if sudo launchctl list | grep -q "com.system.network_loc_switcher"; then
+                if sudo launchctl list | grep -q "${SERVICE_LABEL_BASE}.system"; then
                     warning "Service appears to already be running"
                     log "To restart, first stop it with: $stop_cmd"
                 else
@@ -1605,7 +1618,7 @@ install_and_launch_service() {
                 success "Service launched successfully"
             else
                 # Check if service is already loaded
-                if launchctl list | grep -q "com.user.network_loc_switcher"; then
+                if launchctl list | grep -q "${SERVICE_LABEL_BASE}.user"; then
                     warning "Service appears to already be running"
                     log "To restart, first stop it with: $stop_cmd"
                 else
@@ -1644,9 +1657,9 @@ install_and_launch_service() {
     echo ""
     echo "To check service status:"
     if [[ "$INSTALL_MODE" == "system" ]]; then
-        echo "   sudo launchctl list | grep network_loc_switcher"
+        echo "   sudo launchctl list | grep network_location_switcher"
     else
-        echo "   launchctl list | grep network_loc_switcher"
+        echo "   launchctl list | grep network_location_switcher"
     fi
     echo ""
     echo "To stop the service:"
@@ -1682,11 +1695,11 @@ install_and_launch_service() {
     fi
     
     if [[ "$INSTALL_MODE" == "system" ]]; then
-        echo "   sudo launchctl list | grep network_loc_switcher  # Check status"
-        echo "   sudo tail -f /usr/local/log/NetworkLocationSwitcher/network_loc_switcher*.log  # View logs"
+        echo "   sudo launchctl list | grep network_location_switcher  # Check status"
+        echo "   sudo tail -f /usr/local/log/NetworkLocationSwitcher/network_location_switcher*.log  # View logs"
     else
-        echo "   launchctl list | grep network_loc_switcher       # Check status"
-        echo "   tail -f ~/Library/Logs/NetworkLocationSwitcher/network_loc_switcher*.log  # View logs"
+        echo "   launchctl list | grep network_location_switcher       # Check status"
+        echo "   tail -f ~/Library/Logs/NetworkLocationSwitcher/network_location_switcher*.log  # View logs"
     fi
     echo ""
 }

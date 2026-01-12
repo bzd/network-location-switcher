@@ -8,25 +8,25 @@ The project is designed to support both development and production modes simulta
 
 ## 1. Development vs Production - Complete Isolation
 
-| Aspect | Production | Development |
-|--------|------------|-------------|
-| **Location** | `/usr/local/lib/network_loc_switcher/` | Your git repo directory |
-| **Virtual Env** | `/usr/local/lib/network_loc_switcher/.venv` | `./.venv` (in repo) |
-| **Executable** | `/usr/local/bin/network_loc_switcher` | `./network_loc_switcher.py` |
-| **Service** | Running as LaunchAgent/Daemon | Stopped (run manually) |
-| **Logs** | `/usr/local/log/` or `~/Library/Logs/` | `./logs/` |
+| Aspect | User Mode | System Mode | Development |
+|--------|-----------|-------------|-------------|
+| **Location** | `~/Library/Application Support/NetworkLocationSwitcher/` | `/usr/local/lib/network_location_switcher/` | Your git repo directory |
+| **Virtual Env** | `~/Library/Application Support/NetworkLocationSwitcher/venv` | `/usr/local/lib/network_location_switcher/venv` | `./venv` (in repo) |
+| **Executable** | `/usr/local/bin/network_location_switcher` | `/usr/local/bin/network_location_switcher` | `./network_location_switcher.py` |
+| **Config** | `~/Library/Application Support/NetworkLocationSwitcher/` | `/usr/local/etc/` | `./` |
+| **Logs** | `~/Library/Logs/NetworkLocationSwitcher/` | `/usr/local/log/NetworkLocationSwitcher/` | `./logs/` |
 
 ## 2. Setup Development Environment
 
 ```bash
 # Navigate to your cloned repo
-cd ~/Documents/dev/Mac-Only/network_loc_switcher
+cd ~/Documents/dev/Mac-Only/network_location_switcher
 
-# Run development setup (creates .venv in project directory)
-./install.sh
+# Run development setup (creates venv in project directory)
+./INSTALL.sh
 
 # This creates:
-# - .venv/ directory with Python virtual environment
+# - venv/ directory with Python virtual environment
 # - Development dependencies (pytest, ruff, mypy, black)
 # - logs/ directory for development logs
 ```
@@ -39,17 +39,17 @@ The setup creates an `activate.sh` script:
 # Activate the development virtual environment
 source ./activate.sh
 
-# Now you're using the local .venv, not the production one
-# Your prompt will change to show (.venv)
+# Now you're using the local venv, not the production one
+# Your prompt will change to show (venv)
 ```
 
 ## 4. Development Workflow
 
 ```bash
-# With .venv activated:
+# With venv activated:
 
 # Make code changes
-nano network_loc_switcher.py
+nano network_location_switcher.py
 
 # Format code
 ruff format .
@@ -58,13 +58,13 @@ ruff format .
 ruff check .
 
 # Type check
-mypy network_loc_switcher/network_loc_switcher.py tests/configuration-test.py
+mypy network_location_switcher/network_location_switcher.py tests/configuration-test.py
 
 # Test configuration
 ./tests/configuration-test.py
 
 # Run manually in foreground (NOT as service)
-python network_loc_switcher/network_loc_switcher.py
+python network_location_switcher/network_location_switcher.py
 # Press Ctrl+C to stop
 ```
 
@@ -76,7 +76,7 @@ Production service keeps running in background while your development version ru
 
 ```bash
 # Run development version
-python network_loc_switcher.py
+python network_location_switcher.py
 
 # You'll see real-time output
 # Press Ctrl+C when done testing
@@ -91,7 +91,7 @@ Temporarily stop production service to test development version.
 launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist
 
 # Run your development version
-python network_loc_switcher.py
+python network_location_switcher.py
 
 # Test changes...
 
@@ -111,8 +111,8 @@ For longer-term testing, install development version as a separate service.
 # Copy to LaunchAgents
 cp network.location.switcher.development.plist ~/Library/LaunchAgents/
 
-# This service has label: com.user.network_loc_switcher.development
-# Different from production: com.user.network_loc_switcher
+# This service has label: com.user.network_location_switcher.development
+# Different from production: com.user.network_location_switcher
 
 # Stop production first (only one can run at a time)
 launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist
@@ -121,7 +121,7 @@ launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.development.plist
 
 # View dev logs (different from production logs)
-tail -f ./logs/network_loc_switcher-stdout.log
+tail -f ./logs/network_location_switcher-stdout.log
 ```
 
 ## 6. Key Points About Isolation
@@ -129,15 +129,18 @@ tail -f ./logs/network_loc_switcher-stdout.log
 The environments are isolated because:
 
 1. **Different Python environments**:
-   - Production: `/usr/local/lib/network_loc_switcher/.venv/bin/python`
-   - Development: `./.venv/bin/python`
+   - User mode: `~/Library/Application Support/NetworkLocationSwitcher/venv/bin/python`
+   - System mode: `/usr/local/lib/network_location_switcher/venv/bin/python`
+   - Development: `./venv/bin/python`
 
 2. **Different configuration locations**:
-   - Production: `/usr/local/lib/network_loc_switcher/network-location-config.json`
-   - Development: `./network-location-config.json`
+   - User mode: `~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.conf`
+   - System mode: `/usr/local/etc/network-location-switcher.conf`
+   - Development: `./network-location-switcher.conf`
 
 3. **Different log files**:
-   - Production: `/usr/local/log/` or `~/Library/Logs/`
+   - User mode: `~/Library/Logs/NetworkLocationSwitcher/`
+   - System mode: `/usr/local/log/NetworkLocationSwitcher/`
    - Development: `./logs/`
 
 4. **Only one service can run at a time** (they both monitor the same network changes)
@@ -146,19 +149,19 @@ The environments are isolated because:
 
 ```bash
 # Day-to-day development:
-cd ~/Documents/dev/Mac-Only/network_loc_switcher
+cd ~/Documents/dev/Mac-Only/network_location_switcher
 source ./activate.sh
 
 # Make changes
-nano network_loc_switcher.py
+nano network_location_switcher.py
 
 # Format and lint
 ruff format .
 ruff check .
-mypy network_loc_switcher.py
+mypy network_location_switcher.py
 
 # Test in foreground (production keeps running)
-python network_loc_switcher.py
+python network_location_switcher.py
 # Watch output, press Ctrl+C when satisfied
 
 # Commit changes
@@ -166,7 +169,7 @@ git add .
 git commit -m "Fix: your changes"
 
 # When ready to update production:
-./install.sh --mode production
+./INSTALL.sh --mode production
 
 # Restart production service to pick up changes
 launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist
@@ -177,13 +180,13 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network.location.switche
 
 ```bash
 # Check what's running
-launchctl list | grep network_loc_switcher
+launchctl list | grep network_location_switcher
 
 # View production logs
-tail -f ~/Library/Logs/network_loc_switcher-stdout.log
+tail -f ~/Library/Logs/network_location_switcher-stdout.log
 
 # View development logs (when running as service)
-tail -f ./logs/network_loc_switcher-stdout.log
+tail -f ./logs/network_location_switcher-stdout.log
 
 # Check current network location
 scselect
@@ -217,4 +220,4 @@ You can:
 - Test changes by running manually in a terminal
 - Only stop production when you want to test the dev version as a service
 
-The `install.sh` script is smart enough to detect which mode you're in and set everything up accordingly. For low-priority fixes and cleanup, just use development mode and test manually without touching the production service at all!
+The `INSTALL.sh` script is smart enough to detect which mode you're in and set everything up accordingly. For low-priority fixes and cleanup, just use development mode and test manually without touching the production service at all!

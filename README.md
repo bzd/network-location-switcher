@@ -19,6 +19,7 @@ Additional documentation is found in the sub folder "*docs*".
 * DEVELOPMENT.md : development notes
 * PRODUCTION.md : running a production use case notes
 
+_NOTE: See the [Quick Commands](#quick-commands) section below for example usage._
 
 # Prerequisites
 
@@ -48,9 +49,9 @@ This tool essentially automates the use of the Apple *networksetup* command to c
 
 ## 🚀 Quick Start
 
-IMPORTANT NOTE: After installation, you MUST manually edit the newly created configuration file to map network SSIDs to network locations so the automation knows which network location to use for each SSID:
+IMPORTANT NOTE: After installation, you MUST manually edit the newly created configuration file, ***network-location-switcher.conf*** to map network SSIDs to network locations so the automation knows which network location to use for each SSID:
 
-    network-location-config.json
+    network-location-switcher.conf
 
 Three installation modes are possible:
 
@@ -61,17 +62,17 @@ Three installation modes are possible:
 ### Example: USER Install (per user install) 
 ```bash
 # Clone and install
-git clone https://github.com/bzd/network_loc_switcher.git
-cd network_loc_switcher
+git clone https://github.com/bzd/network_location_switcher.git
+cd network_location_switcher
 
 # Create:
 #   1. runtime python virtual environment.
 #   2. plists for: development, user, and system.
-#   3. default configuration file: network-location-config.json
+#   3. default configuration file: network-location-switcher.conf
 # HINT: Use the "--dry-run" switch to view what will be installed (no changes made)
-./scripts/install.sh --mode user
+./INSTALL.sh --mode user
 
-# Edit the newly created `network-location-config.json` file, which will be consulted
+# Edit the newly created `network-location-switcher.conf` file, which will be consulted
 # during network changes.  See CONFIG.md for details.
 # Each entry will have:
 #
@@ -79,7 +80,7 @@ cd network_loc_switcher
 #    SSID_name_2 : network_location_2
 #    ...
 #
-nano network-location-config.json
+nano network-location-switcher.conf
 
 # If needed, manually create new network locations.
 # Replace '<network_location_name>' as needed
@@ -88,6 +89,39 @@ networksetup -createlocation '<network_location_name>' populate
 ```
 
 > 📖 **For detailed installation and configuration of all modes, see [INSTALL.md](docs/INSTALL.md)**
+
+## QUICK COMMANDS
+
+### Common `manager.sh` Commands
+
+| Command         | Description                                      |
+|-----------------|--------------------------------------------------|
+| `setup`         | Create and configure Python virtual environment   |
+| `activate`      | Print instructions to activate the environment   |
+| `install`       | Install as a launchd service                     |
+| `start`         | Start the launchd service                        |
+| `stop`          | Stop the launchd service                         |
+| `status`        | Show the status of the service                   |
+| `logs`          | Show (tail) the service logs                     |
+| `uninstall`     | Remove the launchd service                       |
+| `test`          | Test the network location switcher               |
+| `clean`         | Remove the virtual environment                   |
+| `help`          | Show help and usage information                  |
+
+**Examples:**
+```bash
+./scripts/manager.sh setup      # Setup environment and dependencies
+./scripts/manager.sh install    # Install as a user or dev service
+./scripts/manager.sh start      # Start service
+./scripts/manager.sh logs       # View logs
+./scripts/manager.sh stop       # Stop service
+./scripts/manager.sh uninstall  # Remove service
+```
+
+
+
+
+
 
 ## 📖 How It Works
 
@@ -152,12 +186,12 @@ The network location switcher uses macOS's `SystemConfiguration` framework to mo
 ## 🛠️ Project Structure
 
 ```
-network_loc_switcher/
+network_location_switcher/
 ├── README.md                              # This file
 ├── LICENSE                                # GPL v3 License
 ├── pyproject.toml                         # Python project configuration
 ├── requirements-macos.txt                 # macOS-specific dependencies
-├── network-location-config.default.json   # Configuration template
+├── network-location-switcher.default.conf   # Configuration template
 ├── test.py                                # Configuration test helper
 ├── docs/                                  # Documentation
 │   ├── CONFIG.md                          # Configuration reference
@@ -165,11 +199,11 @@ network_loc_switcher/
 │   ├── INSTALL.md                         # Installation guide
 │   └── PRODUCTION.md                      # Production deployment
 ├── logs/                                  # Log files (gitignored)
-├── network_loc_switcher/             # Main Python package
+├── network_location_switcher/             # Main Python package
 │   ├── __init__.py                        # Package initialization
-│   └── network_loc_switcher.py       # Main application
+│   └── network_location_switcher.py       # Main application
+├── INSTALL.sh                             # Installation script
 └── scripts/                               # Shell scripts
-    ├── install.sh                         # Installation script
     ├── manager.sh                         # Development management
     └── uninstall.sh                       # Uninstallation script
 ```

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Configuration test script for network_loc_switcher
+Configuration test script for network_location_switcher
 
 This script validates your configuration file and tests network detection
 without actually switching network locations.
@@ -26,15 +26,21 @@ def load_and_validate_config(
     else:
         script_dir = os.path.dirname(os.path.abspath(__file__))
         config_paths = [
-            os.path.join(script_dir, "network-location-config.json"),
-            os.path.expanduser("~/.network-location-config.json"),
-            "/usr/local/etc/network-location-config.json",
-            "/etc/network-location-config.json",
+            os.path.join(script_dir, "network-location-switcher.conf"),
+            os.path.expanduser("~/.network-location-switcher.conf"),
+            # macOS Application Support (user mode installations)
+            os.path.expanduser(
+                "~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.conf"
+            ),
+            "/usr/local/etc/network-location-switcher.conf",
+            "/etc/network-location-switcher.conf",
         ]
 
         # Check if we should create a config from template
-        template_path = os.path.join(script_dir, "network-location-config.default.json")
-        main_config_path = os.path.join(script_dir, "network-location-config.json")
+        template_path = os.path.join(
+            script_dir, "network-location-switcher.default.conf"
+        )
+        main_config_path = os.path.join(script_dir, "network-location-switcher.conf")
 
     config: Optional[dict[str, Any]] = None
     config_file_used: Optional[str] = None
@@ -390,7 +396,7 @@ def main() -> None:
     if passed == total:
         print("🎉 Configuration is ready for use!")
         print("\nTo start the network switcher:")
-        print(f"  python network_loc_switcher.py {config_file}")
+        print(f"  python network_location_switcher.py {config_file}")
     else:
         print("💥 Please fix the issues above before using " "the network switcher")
         sys.exit(1)
