@@ -68,7 +68,7 @@ TBD
 E.g., Turn Wi-Fi off, and then on, and watch the log
 
 ```zsh
-tail -f /Users/brian/Library/Logs/NetworkLocationSwitcher/network_location_switcher.log
+tail -f /Users/$USER/Library/Logs/NetworkLocationSwitcher/network_location_switcher.log
 ```
 
 # What SSIDs are available?
