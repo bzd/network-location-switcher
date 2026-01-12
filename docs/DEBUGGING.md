@@ -14,7 +14,7 @@ Turn off automatic switching
 Turn on automatic switching
 
 ```zsh
-./script/manager.sh start
+./scripts/manager.sh start
 ```
 
 # Turn on debugging mode
