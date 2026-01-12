@@ -992,7 +992,7 @@ def switch_location(ssid: str, target: str) -> None:
             # Send notification for successful switch
             send_notification(
                 "Network Location Switched",
-                f"Found SSID: '{ssid}, switched to '{target}' network location",
+                f"Found SSID '{ssid}'\nSwitched to '{target}' network location",
             )
         except Exception as e:
             log(f"Failed to switch to location '{target}': {e}")
