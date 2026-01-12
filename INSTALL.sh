@@ -5,7 +5,7 @@ set -e
 # Supports development, user, and system installation modes
 
 # Get the project root directory (parent of scripts/)
-PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPTS_DIR="$PROJECT_DIR/scripts"
 
 # Source shared configuration
