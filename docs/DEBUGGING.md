@@ -54,7 +54,7 @@ alias nslstart='launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.agil
 List configuration order; several config files can contribute in a priority merge order
 
 ```zsh
-./scripts/managers.sh status
+./scripts/manager.sh status
 ```
 
 ## Show current ssid<->netloc pairs
