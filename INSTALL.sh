@@ -1460,8 +1460,8 @@ show_summary() {
     echo ""
     echo "📁 Installation Mode: $INSTALL_MODE"
     echo "📁 Virtual Environment: $VENV_DIR"
-    echo "🐍 Python: $($VENV_DIR/bin/python --version)"
-    echo "📦 Pip: $($VENV_DIR/bin/pip --version)"
+    echo "🐍 Python: $("$VENV_DIR/bin/python" --version)"
+    echo "📦 Pip: $("$VENV_DIR/bin/pip" --version)"
     
     if [[ "$INSTALL_MODE" == "system" ]]; then
         echo "🚀 System Installation:"
