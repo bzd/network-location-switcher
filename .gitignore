@@ -212,10 +212,10 @@ logs/*
 secrets/
 .DS_Store
 .vscode/
-network-location-config.json
+network-location-switcher.conf
 .pre-commit-config.yaml
 activate.sh
-network-location-config*.json
-!network-location-config.default.json
+network-location-switcher*.conf
+!network-location-switcher.default.conf
 *.plist
-_NOTES.txt
+*_NOTES.*

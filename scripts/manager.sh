@@ -1,23 +1,19 @@
 #!/bin/bash
-# Management script for network-location-switcher virtual environment
+# Management script for network_location_switcher virtual environment
 
-PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VENV_DIR="$PROJECT_DIR/.venv"
-SERVICE_NAME="com.user.network-location-switcher.development"
-PLIST_FILENAME="network.location.switcher.development.plist"
+# Get the project root directory (parent of scripts/)
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPTS_DIR="$PROJECT_DIR/scripts"
+
+# Source shared configuration
+source "$SCRIPTS_DIR/common.sh"
+
+VENV_DIR="$PROJECT_DIR/venv"
+SERVICE_NAME="${SERVICE_LABEL_BASE}.development"
+PLIST_FILENAME="${PLIST_BASE_NAME}.development.plist"
 LAUNCH_DIR="$HOME/Library/LaunchAgents/"
 
-# Colors
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
-
-log() { echo -e "${BLUE}[$(date '+%H:%M:%S')]${NC} $1"; }
-success() { echo -e "${GREEN}✅ $1${NC}"; }
-warning() { echo -e "${YELLOW}⚠️  $1${NC}"; }
-error() { echo -e "${RED}❌ $1${NC}"; }
+# Colors and logging functions are defined in common.sh
 
 usage() {
     echo "Usage: $0 [COMMAND]"
@@ -51,7 +47,7 @@ check_venv() {
 
 cmd_setup() {
     log "Setting up virtual environment..."
-    ./install.sh
+    ./INSTALL.sh
 }
 
 cmd_activate() {
@@ -102,12 +98,12 @@ cmd_status() {
     log "Checking service status..."
     
     # Define service names and plist locations
-    local DEV_SERVICE="com.user.network-location-switcher.development"
-    local USER_SERVICE="com.user.network-location-switcher"
-    local SYSTEM_SERVICE="com.system.network-location-switcher"
-    local DEV_PLIST="$HOME/Library/LaunchAgents/network.location.switcher.development.plist"
-    local USER_PLIST="$HOME/Library/LaunchAgents/network.location.switcher.user.plist"
-    local SYSTEM_PLIST="/Library/LaunchDaemons/network.location.switcher.system.plist"
+    local DEV_SERVICE="${SERVICE_LABEL_BASE}.development"
+    local USER_SERVICE="${SERVICE_LABEL_BASE}.user"
+    local SYSTEM_SERVICE="${SERVICE_LABEL_BASE}.system"
+    local DEV_PLIST="$HOME/Library/LaunchAgents/${PLIST_BASE_NAME}.development.plist"
+    local USER_PLIST="$HOME/Library/LaunchAgents/${PLIST_BASE_NAME}.user.plist"
+    local SYSTEM_PLIST="/Library/LaunchDaemons/${PLIST_BASE_NAME}.system.plist"
     
     echo ""
     echo "═══════════════════════════════════════════════════════"
@@ -236,9 +232,9 @@ cmd_status() {
                 ;;
         esac
         
-        log_main="$log_dir/network-location-switcher.log"
-        log_stdout="$log_dir/network-location-switcher-stdout.log"
-        log_stderr="$log_dir/network-location-switcher-stderr.log"
+        log_main="$log_dir/network_location_switcher.log"
+        log_stdout="$log_dir/network_location_switcher-stdout.log"
+        log_stderr="$log_dir/network_location_switcher-stderr.log"
         
         echo "Log locations for ${active_mode} mode:"
         echo "  Directory: $log_dir"
@@ -248,32 +244,32 @@ cmd_status() {
         if [ -f "$log_main" ]; then
             local main_lines=$(wc -l < "$log_main" | tr -d ' ')
             local main_size=$(ls -lh "$log_main" | awk '{print $5}')
-            success "app log: network-location-switcher.log"
+            success "app log: network_location_switcher.log"
             echo "  └── $main_lines lines, $main_size, last modified: $(stat -f '%Sm' -t '%Y-%m-%d %H:%M:%S' "$log_main")"
         else
-            echo -e "${BLUE}○${NC} app log: network-location-switcher.log ${YELLOW}(not found)${NC}"
+            echo -e "${BLUE}○${NC} app log: network_location_switcher.log ${YELLOW}(not found)${NC}"
         fi
         
         # stdout log
         if [ -f "$log_stdout" ]; then
             local stdout_lines=$(wc -l < "$log_stdout" | tr -d ' ')
-            success "stdout:  network-location-switcher-stdout.log"
+            success "stdout:  network_location_switcher-stdout.log"
             echo "  └── $stdout_lines lines, last modified: $(stat -f '%Sm' -t '%Y-%m-%d %H:%M:%S' "$log_stdout")"
         else
-            echo -e "${BLUE}○${NC} stdout:  network-location-switcher-stdout.log ${YELLOW}(not found)${NC}"
+            echo -e "${BLUE}○${NC} stdout:  network_location_switcher-stdout.log ${YELLOW}(not found)${NC}"
         fi
         
         # stderr log
         if [ -f "$log_stderr" ]; then
             local stderr_lines=$(wc -l < "$log_stderr" | tr -d ' ')
             if [ "$stderr_lines" -gt 0 ]; then
-                warning "stderr:  network-location-switcher-stderr.log ($stderr_lines lines)"
+                warning "stderr:  network_location_switcher-stderr.log ($stderr_lines lines)"
             else
-                success "stderr:  network-location-switcher-stderr.log (empty - no errors)"
+                success "stderr:  network_location_switcher-stderr.log (empty - no errors)"
             fi
             echo "  └── last modified: $(stat -f '%Sm' -t '%Y-%m-%d %H:%M:%S' "$log_stderr")"
         else
-            echo -e "${BLUE}○${NC} stderr:  network-location-switcher-stderr.log ${YELLOW}(not found)${NC}"
+            echo -e "${BLUE}○${NC} stderr:  network_location_switcher-stderr.log ${YELLOW}(not found)${NC}"
         fi
         
         echo ""
@@ -291,11 +287,11 @@ cmd_status() {
     # Configuration file search order (same as Python script)
     local username=$(whoami)
     local config_paths=(
-        "$PROJECT_DIR/network-location-config.json"
-        "$HOME/.network-location-config.json"
-        "/usr/local/etc/$username/network-location-config.json"
-        "/usr/local/etc/network-location-config.json"
-        "/etc/network-location-config.json"
+        "$PROJECT_DIR/${CONFIG_FILE}"
+        "$HOME/.${CONFIG_FILE}"
+        "/usr/local/etc/$username/${CONFIG_FILE}"
+        "/usr/local/etc/${CONFIG_FILE}"
+        "/etc/${CONFIG_FILE}"
     )
     
     local config_labels=(
@@ -370,7 +366,7 @@ cmd_logs() {
     
     echo ""
     echo "=== System Logs ==="
-    log show --predicate 'subsystem contains "com.user.network-location-switcher.venv"' --last 1h
+    log show --predicate "subsystem contains \"${SERVICE_LABEL_BASE}\"" --last 1h
 }
 
 cmd_uninstall() {

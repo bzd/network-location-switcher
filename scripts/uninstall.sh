@@ -4,32 +4,14 @@ set -e
 # Uninstall script for Network Location Switcher
 # Removes all files, directories, and services for a given installation mode
 
-PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SCRIPT_NAME="network-location-switcher"
+# Get the project root directory (parent of scripts/)
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPTS_DIR="$PROJECT_DIR/scripts"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# Source shared configuration
+source "$SCRIPTS_DIR/common.sh"
 
-# Logging functions
-log() {
-    echo -e "${BLUE}[$(date '+%H:%M:%S')]${NC} $1"
-}
-
-success() {
-    echo -e "${GREEN}✅ $1${NC}"
-}
-
-warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
-}
-
-error() {
-    echo -e "${RED}❌ $1${NC}"
-}
+# Colors and logging functions are defined in common.sh
 
 # Function to show usage
 usage() {
@@ -48,10 +30,10 @@ uninstall_development() {
     log "Uninstalling development mode..."
     
     # Stop and remove service
-    local service_id="gui/$(id -u)/com.development.network-location-switcher"
-    local plist_path="$HOME/Library/LaunchAgents/network.location.switcher.development.plist"
+    local service_id="gui/$(id -u)/${SERVICE_LABEL_BASE}.development"
+    local plist_path="$HOME/Library/LaunchAgents/${PLIST_BASE_NAME}.development.plist"
     
-    if launchctl list | grep -q "com.development.network-location-switcher" 2>/dev/null; then
+    if launchctl list | grep -q "${SERVICE_LABEL_BASE}.development" 2>/dev/null; then
         log "Stopping development service..."
         launchctl bootout "$service_id" 2>/dev/null || true
         success "Service stopped"
@@ -64,14 +46,14 @@ uninstall_development() {
     fi
     
     # Remove virtual environment
-    if [ -d "$PROJECT_DIR/.venv" ]; then
+    if [ -d "$PROJECT_DIR/venv" ]; then
         log "Removing virtual environment..."
         # Check if we need sudo (parent directory might not be writable)
-        local venv_parent=$(dirname "$PROJECT_DIR/.venv")
+        local venv_parent=$(dirname "$PROJECT_DIR/venv")
         if [[ ! -w "$venv_parent" ]]; then
-            sudo rm -rf "$PROJECT_DIR/.venv"
+            sudo rm -rf "$PROJECT_DIR/venv"
         else
-            rm -rf "$PROJECT_DIR/.venv"
+            rm -rf "$PROJECT_DIR/venv"
         fi
         success "Virtual environment removed"
     fi
@@ -86,7 +68,7 @@ uninstall_development() {
     
     # Remove generated files
     local files_to_remove=(
-        "$PROJECT_DIR/network.location.switcher.development.plist"
+        "$PROJECT_DIR/${PLIST_BASE_NAME}.development.plist"
         "$PROJECT_DIR/activate.sh"
         "$PROJECT_DIR/.pre-commit-config.yaml"
     )
@@ -98,8 +80,8 @@ uninstall_development() {
         fi
     done
     
-    # Note: User configuration file is preserved at $PROJECT_DIR/network-location-config.json
-    # Remove it manually if desired: rm $PROJECT_DIR/network-location-config.json
+    # Note: User configuration file is preserved at $PROJECT_DIR/${CONFIG_FILE}
+    # Remove it manually if desired: rm $PROJECT_DIR/${CONFIG_FILE}
     
     success "Development mode uninstalled"
 }
@@ -111,12 +93,13 @@ uninstall_user() {
     # Determine installation paths
     local install_prefix="${INSTALL_PREFIX:-/usr/local}"
     local bin_dir="${install_prefix}/bin"
-    local lib_dir="${install_prefix}/lib/${SCRIPT_NAME}"
-    local service_id="gui/$(id -u)/com.user.network-location-switcher"
-    local plist_path="$HOME/Library/LaunchAgents/network.location.switcher.user.plist"
+    # User mode uses macOS Application Support directory
+    local lib_dir="$HOME/Library/Application Support/NetworkLocationSwitcher"
+    local service_id="gui/$(id -u)/${SERVICE_LABEL_BASE}.user"
+    local plist_path="$HOME/Library/LaunchAgents/${PLIST_BASE_NAME}.user.plist"
     
     # Stop and remove service
-    if launchctl list | grep -q "com.user.network-location-switcher" 2>/dev/null; then
+    if launchctl list | grep -q "${SERVICE_LABEL_BASE}.user" 2>/dev/null; then
         log "Stopping user service..."
         launchctl bootout "$service_id" 2>/dev/null || true
         success "Service stopped"
@@ -153,21 +136,24 @@ uninstall_user() {
         success "Library directory removed"
     fi
     
-    # Remove user logs (keep directory, just remove our logs)
-    if [ -d "$HOME/Library/Logs" ]; then
+    # Remove user logs
+    local log_dir="$HOME/Library/Logs/NetworkLocationSwitcher"
+    if [ -d "$log_dir" ]; then
         log "Removing log files..."
-        rm -f "$HOME/Library/Logs/network-location-switcher"*.log 2>/dev/null || true
+        rm -f "$log_dir/network_location_switcher"*.log 2>/dev/null || true
+        # Remove log directory if empty
+        rmdir "$log_dir" 2>/dev/null || true
         success "Log files removed"
     fi
     
     # Remove generated plist from project directory
-    if [ -f "$PROJECT_DIR/network.location.switcher.user.plist" ]; then
-        rm -f "$PROJECT_DIR/network.location.switcher.user.plist"
+    if [ -f "$PROJECT_DIR/${PLIST_BASE_NAME}.user.plist" ]; then
+        rm -f "$PROJECT_DIR/${PLIST_BASE_NAME}.user.plist"
         log "Removed generated plist from project directory"
     fi
     
-    # Note: Configuration file is preserved at $install_prefix/etc/$USER/network-location-config.json
-    # Remove it manually if desired: rm $install_prefix/etc/$USER/network-location-config.json
+    # Note: Configuration file is preserved at ~/Library/Application Support/NetworkLocationSwitcher/${CONFIG_FILE}
+    # Remove it manually if desired: rm "$HOME/Library/Application Support/NetworkLocationSwitcher/${CONFIG_FILE}"
     
     success "User mode uninstalled"
 }
@@ -182,11 +168,11 @@ uninstall_system() {
     local lib_dir="${install_prefix}/lib/${SCRIPT_NAME}"
     local etc_dir="${install_prefix}/etc"
     local log_dir="${install_prefix}/log"
-    local service_id="system/com.system.network-location-switcher"
-    local plist_path="/Library/LaunchDaemons/network.location.switcher.system.plist"
+    local service_id="system/${SERVICE_LABEL_BASE}.system"
+    local plist_path="/Library/LaunchDaemons/${PLIST_BASE_NAME}.system.plist"
     
     # Stop and remove service
-    if sudo launchctl list | grep -q "com.system.network-location-switcher" 2>/dev/null; then
+    if sudo launchctl list | grep -q "${SERVICE_LABEL_BASE}.system" 2>/dev/null; then
         log "Stopping system service..."
         sudo launchctl bootout "$service_id" 2>/dev/null || true
         success "Service stopped"
@@ -212,19 +198,19 @@ uninstall_system() {
         success "Library directory removed"
     fi
     
-    # Note: Configuration file is preserved at $etc_dir/network-location-config.json
-    # Remove it manually if desired: sudo rm /usr/local/etc/network-location-config.json
+    # Note: Configuration file is preserved at $etc_dir/${CONFIG_FILE}
+    # Remove it manually if desired: sudo rm /usr/local/etc/${CONFIG_FILE}
     
     # Remove log files (keep directory, just remove our logs)
     if [ -d "$log_dir" ]; then
         log "Removing log files..."
-        sudo rm -f "$log_dir/network-location-switcher"*.log 2>/dev/null || true
+        sudo rm -f "$log_dir/network_location_switcher"*.log 2>/dev/null || true
         success "Log files removed"
     fi
     
     # Remove generated plist from project directory
-    if [ -f "$PROJECT_DIR/network.location.switcher.system.plist" ]; then
-        rm -f "$PROJECT_DIR/network.location.switcher.system.plist"
+    if [ -f "$PROJECT_DIR/${PLIST_BASE_NAME}.system.plist" ]; then
+        rm -f "$PROJECT_DIR/${PLIST_BASE_NAME}.system.plist"
         log "Removed generated plist from project directory"
     fi
     

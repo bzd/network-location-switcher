@@ -7,9 +7,9 @@ or Ethernet.
 Configuration is loaded from an external JSON file for maximum flexibility.
 
 Usage:
-    network-location-switcher [config_file]
-    network-location-switcher --help
-    network-location-switcher --version
+    network_location_switcher [config_file]
+    network_location_switcher --help
+    network_location_switcher --version
 """
 
 # import re
@@ -68,31 +68,33 @@ def show_help() -> None:
     print("  --mode, -m MODE         Use config from a specific installation mode")
     print("                          Modes: system, user, dev, auto")
     print(
-        "                          system: /usr/local/etc/network-location-config.json"
+        "                          system: /usr/local/etc/network-location-switcher.json"
     )
     print(
-        "                          user:   /usr/local/etc/$USER/network-location-config.json"
+        "                          user:   ~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.json"
     )
     print(
-        "                          dev:    ./network-location-config.json (script dir)"
+        "                          dev:    ./network-location-switcher.json (script dir)"
     )
     print("                          auto:   Search all locations (default)")
     print()
     print("Examples:")
-    print("  network-location-switcher --test notification")
-    print("  network-location-switcher --test --mode system")
-    print("  network-location-switcher --test --mode system notification")
-    print("  network-location-switcher -t -m user network")
-    print("  network-location-switcher -c /path/to/config.json")
-    print("  network-location-switcher -c /path/to/config.json --test")
+    print("  network_location_switcher --test notification")
+    print("  network_location_switcher --test --mode system")
+    print("  network_location_switcher --test --mode system notification")
+    print("  network_location_switcher -t -m user network")
+    print("  network_location_switcher -c /path/to/config.json")
+    print("  network_location_switcher -c /path/to/config.json --test")
     print()
     print("Configuration file locations (searched in order when mode=auto):")
     print("  1. Explicit: -c /path/to/config.json")
-    print("  2. Script directory: ./network-location-config.json")
-    print("  3. User home: ~/.network-location-config.json")
-    print("  4. User-specific: /usr/local/etc/$USER/network-location-config.json")
-    print("  5. System-wide: /usr/local/etc/network-location-config.json")
-    print("  6. System: /etc/network-location-config.json")
+    print("  2. Script directory: ./network-location-switcher.json")
+    print("  3. User home: ~/.network-location-switcher.json")
+    print(
+        "  4. macOS App Support: ~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.json"
+    )
+    print("  5. System-wide: /usr/local/etc/network-location-switcher.json")
+    print("  6. System: /etc/network-location-switcher.json")
     print()
     print("If no config file is found, a default one will be created.")
     print("Edit the config file to match your network setup.")
@@ -118,8 +120,8 @@ class ConfigMode:
     """Enum-like class for config file modes."""
 
     AUTO = "auto"  # Use default search order
-    SYSTEM = "system"  # Use /usr/local/etc/network-location-config.json
-    USER = "user"  # Use /usr/local/etc/{username}/network-location-config.json
+    SYSTEM = "system"  # Use /usr/local/etc/network-location-switcher.json
+    USER = "user"  # Use /usr/local/etc/{username}/network-location-switcher.json
     DEV = "dev"  # Use script directory config
 
 
@@ -236,17 +238,15 @@ def get_test_mode() -> str:
 def get_config_path_for_mode(mode: str) -> Optional[str]:
     """Get the config file path for a specific mode."""
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    username = os.environ.get("USER", os.environ.get("USERNAME", ""))
 
     if mode == ConfigMode.SYSTEM:
-        return "/usr/local/etc/network-location-config.json"
+        return "/usr/local/etc/network-location-switcher.json"
     elif mode == ConfigMode.USER:
-        if username:
-            return f"/usr/local/etc/{username}/network-location-config.json"
-        print("Error: Cannot determine username for user mode config")
-        return None
+        return os.path.expanduser(
+            "~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.json"
+        )
     elif mode == ConfigMode.DEV:
-        return os.path.join(script_dir, "network-location-config.json")
+        return os.path.join(script_dir, "network-location-switcher.json")
     # AUTO mode uses search order
     return None
 
@@ -259,7 +259,6 @@ def load_config() -> dict[str, Any]:
 
     # Configuration file paths to try (in order of preference)
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    username = os.environ.get("USER", os.environ.get("USERNAME", ""))
 
     # If a specific mode was requested, use that config path
     if config_mode != ConfigMode.AUTO:
@@ -289,14 +288,16 @@ def load_config() -> dict[str, Any]:
         # 1. Command line argument
         config_file_arg,
         # 2. Same directory as script
-        os.path.join(script_dir, "network-location-config.json"),
+        os.path.join(script_dir, "network-location-switcher.json"),
         # 3. User's home directory
-        os.path.expanduser("~/.network-location-config.json"),
-        # 4. User-specific system configuration (for user mode installations)
-        f"/usr/local/etc/{username}/network-location-config.json" if username else None,
+        os.path.expanduser("~/.network-location-switcher.json"),
+        # 4. macOS Application Support (user mode installations)
+        os.path.expanduser(
+            "~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.json"
+        ),
         # 5. System-wide configuration
-        "/usr/local/etc/network-location-config.json",
-        "/etc/network-location-config.json",
+        "/usr/local/etc/network-location-switcher.json",
+        "/etc/network-location-switcher.json",
     ]
 
     # Filter out None values and ensure type safety
@@ -325,8 +326,8 @@ def load_config() -> dict[str, Any]:
 
 def create_default_config(script_dir: str) -> dict[str, Any]:
     """Create a new configuration file from the default template."""
-    default_config_path = os.path.join(script_dir, "network-location-config.json")
-    template_path = os.path.join(script_dir, "network-location-config.default.json")
+    default_config_path = os.path.join(script_dir, "network-location-switcher.json")
+    template_path = os.path.join(script_dir, "network-location-switcher.default.json")
 
     # Try to use the template file first
     if os.path.isfile(template_path):
@@ -352,7 +353,7 @@ def create_default_config(script_dir: str) -> dict[str, Any]:
                 json.dump(clean_config, f, indent=2)
 
             log(f"Created configuration file from template: " f"{default_config_path}")
-            log("Template file used: network-location-config.default.json")
+            log("Template file used: network-location-switcher.default.json")
             log("Please edit the new config file to match your network setup!")
             return clean_config
 
@@ -369,7 +370,7 @@ def create_default_config(script_dir: str) -> dict[str, Any]:
         },
         "default_wifi_location": "Automatic",
         "ethernet_location": "Wired",
-        "log_file": "/usr/local/log/network-location-switcher.log",
+        "log_file": "/usr/local/log/network_location_switcher.log",
     }
 
     try:
@@ -385,7 +386,7 @@ def create_default_config(script_dir: str) -> dict[str, Any]:
             "ssid_location_map": {},
             "default_wifi_location": "Automatic",
             "ethernet_location": "Wired",
-            "log_file": "/usr/local/log/network-location-switcher.log",
+            "log_file": "/usr/local/log/network_location_switcher.log",
         }
 
 
@@ -396,7 +397,7 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
         "ssid_location_map": {},
         "default_wifi_location": "Automatic",
         "ethernet_location": "Wired",
-        "log_file": "/usr/local/log/network-location-switcher.log",
+        "log_file": "/usr/local/log/network_location_switcher.log",
     }
 
     for key, default_value in defaults.items():
@@ -424,7 +425,7 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
             # Fall back to script directory
             script_dir = os.path.dirname(os.path.abspath(__file__))
             config["log_file"] = os.path.join(
-                script_dir, "network-location-switcher.log"
+                script_dir, "network_location_switcher.log"
             )
             log(f"Using fallback log file: {config['log_file']}")
 
@@ -885,7 +886,6 @@ def run_test_config() -> bool:
 
     config_mode = get_config_mode()
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    username = os.environ.get("USER", os.environ.get("USERNAME", ""))
 
     # Show mode if explicitly set
     if config_mode != ConfigMode.AUTO:
@@ -897,19 +897,17 @@ def run_test_config() -> bool:
         config_paths = [
             (
                 "Script directory (dev)",
-                os.path.join(script_dir, "network-location-config.json"),
+                os.path.join(script_dir, "network-location-switcher.json"),
             ),
-            ("User home", os.path.expanduser("~/.network-location-config.json")),
+            ("User home", os.path.expanduser("~/.network-location-switcher.json")),
             (
-                "User-specific (user)",
-                (
-                    f"/usr/local/etc/{username}/network-location-config.json"
-                    if username
-                    else None
+                "macOS App Support (user)",
+                os.path.expanduser(
+                    "~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.json"
                 ),
             ),
-            ("System-wide (system)", "/usr/local/etc/network-location-config.json"),
-            ("System", "/etc/network-location-config.json"),
+            ("System-wide (system)", "/usr/local/etc/network-location-switcher.json"),
+            ("System", "/etc/network-location-switcher.json"),
         ]
 
         print("\n[Config Mode: auto]")
@@ -981,7 +979,7 @@ def run_tests(test_mode: str) -> None:
     sys.exit(0 if success else 1)
 
 
-def switch_location(target: str) -> None:
+def switch_location(ssid: str, target: str) -> None:
     """Switch to the specified network location if not already active."""
     current = get_current_location()
     log(f"Current location: {current}, target: {target}")
@@ -993,7 +991,8 @@ def switch_location(target: str) -> None:
             log(f"Switched network location → {target}")
             # Send notification for successful switch
             send_notification(
-                "Network Location Switched", f"Switched to '{target}' network location"
+                "Network Location Switched",
+                f"Found SSID '{ssid}'\nSwitched to '{target}' network location",
             )
         except Exception as e:
             log(f"Failed to switch to location '{target}': {e}")
@@ -1021,7 +1020,7 @@ def network_changed(store: Any, changed_keys: Any, info: Any) -> None:
             "No active Wi-Fi or Ethernet detected. " f"Using default location: {target}"
         )
 
-    switch_location(target)
+    switch_location(ssid, target)
 
 
 # ──────────────────────────────────────────────

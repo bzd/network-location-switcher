@@ -29,31 +29,33 @@ xcode-select --install
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/bzd/network-location-switcher.git
-cd network-location-switcher
+mkdir -p /usr/local/src/$USER
+cd /usr/local/src/$USER
+git clone https://github.com/bzd/network_location_switcher.git
+cd network_location_switcher
 ```
 
-### 2. Choose Installation Mode
+### 2. Choose Installation Mode (User, System, Development)
 
 **Development Mode (Easiest - Start Here):**
 ```bash
-./install.sh                    # Development mode
-./test.py                     # Configure network configurations
-./manager.sh install          # Install plist
-./manager.sh start            # Start monitoring
+./INSTALL.sh                  # Development mode is default w/o --mode switch
+./tests/configuration-test.py  # Configure network configurations
+./scripts/manager.sh install          # Install plist
+./scripts/manager.sh start            # Start monitoring
 ```
 
 **User Mode (Personal Daily Use):**
 ```bash
-./install.sh --mode user        # User service mode
-./test.py                   # Configure networks
+./INSTALL.sh --mode user        # User service mode
+./tests/configuration-test.py  # Configure networks
 # Service starts automatically at login
 ```
 
 **System Mode (Multi-user/Server):**
 ```bash
-./install.sh --mode system      # System service mode (requires sudo)
-sudo ./test.py              # Configure networks
+./INSTALL.sh --mode system      # System service mode (requires sudo)
+sudo ./tests/configuration-test.py  # Configure networks
 # Service starts automatically at boot
 ```
 
@@ -66,48 +68,48 @@ sudo ./test.py              # Configure networks
 #### Installation
 ```bash
 # Clone and setup
-git clone https://github.com/bzd/network-location-switcher.git
-cd network-location-switcher
+git clone https://github.com/bzd/network_location_switcher.git
+cd network_location_switcher
 
 # Install in development mode (default)
-./install.sh
+./INSTALL.sh
 
 # Configure your networks
-./test.py
+./tests/configuration-test.py
 ```
 
 #### Management
 ```bash
 # Using the management script (recommended)
-./manager.sh setup         # Initial setup
-./manager.sh test          # Test configuration
-./manager.sh install       # Install as development service
-./manager.sh start         # Start service
-./manager.sh stop          # Stop service
-./manager.sh status        # Check status
-./manager.sh logs          # View logs
-./manager.sh uninstall     # Remove service
+./scripts/manager.sh setup         # Initial setup
+./scripts/manager.sh test          # Test configuration
+./scripts/manager.sh install       # Install as development service
+./scripts/manager.sh start         # Start service
+./scripts/manager.sh stop          # Stop service
+./scripts/manager.sh status        # Check status
+./scripts/manager.sh logs          # View logs
+./scripts/manager.sh uninstall     # Remove service
 
 # Manual execution (foreground)
 source activate.sh
-python network-location-switcher.py
+python network_location_switcher.py
 
 # Manual service control
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.development.plist
-launchctl bootout gui/$(id -u)/com.user.network-location-switcher.development
+launchctl bootout gui/$(id -u)/com.user.network_location_switcher.development
 ```
 
 #### File Locations
-- **Virtual Environment:** `./.venv/`
-- **Configuration:** `./network-location-config.json`
-- **Logs:** `./logs/network-location-switcher*.log`
+- **Virtual Environment:** `./venv/`
+- **Configuration:** `./network-location-switcher.json`
+- **Logs:** `./logs/network_location_switcher*.log`
 - **Service:** `~/Library/LaunchAgents/network.location.switcher.development.plist`
 
 #### Cleanup
 ```bash
-./manager.sh stop          # Stop service
-./manager.sh uninstall     # Remove service
-./manager.sh clean         # Remove virtual environment
+./scripts/manager.sh stop          # Stop service
+./scripts/manager.sh uninstall     # Remove service
+./scripts/manager.sh clean         # Remove virtual environment
 ```
 
 ---
@@ -119,47 +121,46 @@ launchctl bootout gui/$(id -u)/com.user.network-location-switcher.development
 #### Installation
 ```bash
 # Clone repository
-git clone https://github.com/bzd/network-location-switcher.git
-cd network-location-switcher
+git clone https://github.com/bzd/network_location_switcher.git
+cd network_location_switcher
 
 # Install as user service
-./install.sh --mode user
+./INSTALL.sh --mode user
 
-# Configure your networks
-./test.py
+# Test the configuration for your networks
+./tests/configuration-test.py
 ```
 
 #### Service Management
 ```bash
 # Service control
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/network.location.switcher.user.plist
-launchctl bootout gui/$(id -u)/com.user.network-location-switcher
+launchctl bootout gui/$(id -u)/com.user.network_location_switcher
 
 # Check status
-launchctl list | grep network-location-switcher
+launchctl list | grep network_location_switcher
 
 # View logs
-tail -f ~/Library/Logs/network-location-switcher-stdout.log
-tail -f ~/Library/Logs/network-location-switcher-stderr.log
-tail -f ~/Library/Logs/network-location-switcher.log
+tail -f ~/Library/Logs/network_location_switcher-stdout.log
+tail -f ~/Library/Logs/network_location_switcher-stderr.log
+tail -f ~/Library/Logs/network_location_switcher.log
 ```
 
 #### File Locations
-- **Installation:** `/usr/local/lib/network-location-switcher/`
-- **Configuration:** `~/.network-location-config.json`
-- **Logs:** `~/Library/Logs/network-location-switcher*.log`
-- **Service:** `~/Library/LaunchAgents/network.location.switcher.user.plist`
+- **Installation:** `~/Library/Application Support/NetworkLocationSwitcher/`
+- **Configuration:** `~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.json`
+- **Logs:** `~/Library/Logs/NetworkLocationSwitcher/network_location_switcher*.log`
+- **Service:** `~/Library/LaunchAgents/com.agilesv.networklocationswitcher.user.plist`
 
 #### Uninstallation
 ```bash
 # Stop and remove service
-launchctl bootout gui/$(id -u)/com.user.network-location-switcher
-rm ~/Library/LaunchAgents/network.location.switcher.user.plist
+launchctl bootout gui/$(id -u)/com.agilesv.networklocationswitcher.user
+rm ~/Library/LaunchAgents/com.agilesv.networklocationswitcher.user.plist
 
 # Remove installation
-sudo rm -rf /usr/local/lib/network-location-switcher
-rm ~/.network-location-config.json
-rm ~/Library/Logs/network-location-switcher*.log
+rm -rf ~/Library/Application\ Support/NetworkLocationSwitcher
+rm -rf ~/Library/Logs/NetworkLocationSwitcher
 ```
 
 ---
@@ -171,47 +172,47 @@ rm ~/Library/Logs/network-location-switcher*.log
 #### Installation
 ```bash
 # Clone repository
-git clone https://github.com/bzd/network-location-switcher.git
-cd network-location-switcher
+git clone https://github.com/bzd/network_location_switcher.git
+cd network_location_switcher
 
 # Install as system service (requires sudo)
-./install.sh --mode system
+./INSTALL.sh --mode system
 
 # Configure networks (system-wide)
-sudo ./test.py
+sudo ./tests/configuration-test.py
 ```
 
 #### Service Management
 ```bash
 # Service control (requires sudo)
 sudo launchctl bootstrap system /Library/LaunchDaemons/network.location.switcher.system.plist
-sudo launchctl bootout system/com.system.network-location-switcher
+sudo launchctl bootout system/com.system.network_location_switcher
 
 # Check status
-sudo launchctl list | grep network-location-switcher
+sudo launchctl list | grep network_location_switcher
 
 # View logs
-sudo tail -f /usr/local/log/network-location-switcher-stdout.log
-sudo tail -f /usr/local/log/network-location-switcher-stderr.log
-sudo tail -f /usr/local/log/network-location-switcher.log
+sudo tail -f /usr/local/log/network_location_switcher-stdout.log
+sudo tail -f /usr/local/log/network_location_switcher-stderr.log
+sudo tail -f /usr/local/log/network_location_switcher.log
 ```
 
 #### File Locations
-- **Installation:** `/usr/local/lib/network-location-switcher/`
-- **Configuration:** `/usr/local/etc/network-location-config.json`
-- **Logs:** `/usr/local/log/network-location-switcher*.log`
+- **Installation:** `/usr/local/lib/network_location_switcher/`
+- **Configuration:** `/usr/local/etc/network-location-switcher.json`
+- **Logs:** `/usr/local/log/network_location_switcher*.log`
 - **Service:** `/Library/LaunchDaemons/network.location.switcher.system.plist`
 
 #### Uninstallation
 ```bash
 # Stop and remove service (requires sudo)
-sudo launchctl bootout system/com.system.network-location-switcher
+sudo launchctl bootout system/com.system.network_location_switcher
 sudo rm /Library/LaunchDaemons/network.location.switcher.system.plist
 
 # Remove installation
-sudo rm -rf /usr/local/lib/network-location-switcher
-sudo rm /usr/local/etc/network-location-config.json
-sudo rm /usr/local/log/network-location-switcher*.log
+sudo rm -rf /usr/local/lib/network_location_switcher
+sudo rm /usr/local/etc/network-location-switcher.json
+sudo rm /usr/local/log/network_location_switcher*.log
 ```
 
 ## ⚙️ Configuration Setup
@@ -236,7 +237,7 @@ networksetup -listlocations
 Run the configuration helper:
 
 ```bash
-./test.py
+./tests/configuration-test.py
 ```
 
 This will:
@@ -246,7 +247,7 @@ This will:
 - Check log file permissions
 
 ### 3. Edit Configuration (EXAMPLES)
-Edit the generated `network-location-config.json`:
+Edit the generated `network-location-switcher.json`:
 
 ```json
 {
@@ -258,21 +259,21 @@ Edit the generated `network-location-config.json`:
   },
   "default_wifi_location": "Automatic",
   "ethernet_location": "Wired",
-  "log_file": "/usr/local/log/network-location-switcher.log"
+  "log_file": "/usr/local/log/network_location_switcher.log"
 }
 ```
 
 ### 4. Test Configuration
 ```bash
 # Test your configuration
-./test.py
+./tests/configuration-test.py
 
 # Test manually in foreground
 source activate.sh  # (development mode only)
-python network-location-switcher.py
+python network_location_switcher.py
 
 # View help
-python network-location-switcher.py --help
+python network_location_switcher.py --help
 ```
 
 ## 🔄 Migration Between Modes
@@ -280,38 +281,38 @@ python network-location-switcher.py --help
 ### From Development → User Mode
 ```bash
 # Stop development service
-./manager.sh stop
+./scripts/manager.sh stop
 
 # Install as user service
-./install.sh --mode user
+./INSTALL.sh --mode user
 
 # Copy configuration
-cp ./network-location-config.json ~/.network-location-config.json
+cp ./network-location-switcher.json ~/.network-location-switcher.json
 ```
 
 ### From User → System Mode
 ```bash
 # Stop user service
-launchctl bootout gui/$(id -u)/com.user.network-location-switcher
+launchctl bootout gui/$(id -u)/com.user.network_location_switcher
 
 # Install as system service
-./install.sh --mode system
+./INSTALL.sh --mode system
 
 # Copy configuration
-sudo cp ~/.network-location-config.json /usr/local/etc/network-location-config.json
+sudo cp ~/.network-location-switcher.json /usr/local/etc/network-location-switcher.json
 ```
 
 ### From System → Development Mode
 ```bash
 # Stop system service
-sudo launchctl bootout system/com.system.network-location-switcher
+sudo launchctl bootout system/com.system.network_location_switcher
 
 # Setup development environment
-./install.sh
+./INSTALL.sh
 
 # Copy configuration
-sudo cp /usr/local/etc/network-location-config.json ./network-location-config.json
-sudo chown $(whoami) ./network-location-config.json
+sudo cp /usr/local/etc/network-location-switcher.json ./network-location-switcher.json
+sudo chown $(whoami) ./network-location-switcher.json
 ```
 
 ## 📊 Monitoring & Logs
@@ -321,34 +322,34 @@ sudo chown $(whoami) ./network-location-config.json
 #### Development Mode
 ```bash
 # Application logs
-tail -f ./logs/network-location-switcher.log
+tail -f ./logs/network_location_switcher.log
 
 # Service logs  
 tail -f ./logs/stdout.log
 tail -f ./logs/stderr.log
 
 # All logs at once
-./manager.sh logs
+./scripts/manager.sh logs
 ```
 
 #### User Mode
 ```bash
 # Application logs
-tail -f ~/Library/Logs/network-location-switcher.log
+tail -f ~/Library/Logs/network_location_switcher.log
 
 # Service logs
-tail -f ~/Library/Logs/network-location-switcher-stdout.log
-tail -f ~/Library/Logs/network-location-switcher-stderr.log
+tail -f ~/Library/Logs/network_location_switcher-stdout.log
+tail -f ~/Library/Logs/network_location_switcher-stderr.log
 ```
 
 #### System Mode  
 ```bash
 # Application logs (requires sudo)
-sudo tail -f /usr/local/log/network-location-switcher.log
+sudo tail -f /usr/local/log/network_location_switcher.log
 
 # Service logs (requires sudo)
-sudo tail -f /usr/local/log/network-location-switcher-stdout.log
-sudo tail -f /usr/local/log/network-location-switcher-stderr.log
+sudo tail -f /usr/local/log/network_location_switcher-stdout.log
+sudo tail -f /usr/local/log/network_location_switcher-stderr.log
 ```
 
 ### Example Log Output
@@ -373,12 +374,12 @@ sudo tail -f /usr/local/log/network-location-switcher-stderr.log
 #### Service Not Starting
 ```bash
 # Check service status
-launchctl list | grep network-location-switcher
+launchctl list | grep network_location_switcher
 
 # View error logs
-tail -f ~/Library/Logs/network-location-switcher-stderr.log  # User mode
+tail -f ~/Library/Logs/network_location_switcher-stderr.log  # User mode
 tail -f ./logs/stderr.log                               # Development mode
-sudo tail -f /usr/local/log/network-location-switcher-stderr.log   # System mode
+sudo tail -f /usr/local/log/network_location_switcher-stderr.log   # System mode
 
 # Check plist file syntax
 plutil ~/Library/LaunchAgents/network.location.switcher.*.plist
@@ -387,7 +388,7 @@ plutil ~/Library/LaunchAgents/network.location.switcher.*.plist
 #### Network Not Detected
 ```bash
 # Test network detection manually
-python network-location-switcher.py
+python network_location_switcher.py
 
 # Check available network services
 networksetup -listallhardwareports
@@ -399,10 +400,10 @@ networksetup -listpreferredwirelessnetworks en0  # Adjust interface as needed
 #### Configuration Errors
 ```bash
 # Validate configuration
-./test.py
+./tests/configuration-test.py
 
 # Check configuration file syntax
-python -m json.tool network-location-config.json
+python -m json.tool network-location-switcher.json
 
 # Check network locations exist
 networksetup -listlocations
@@ -412,19 +413,19 @@ networksetup -listlocations
 ```bash
 # Fix log file permissions (development/user mode)
 mkdir -p ~/Library/Logs
-touch ~/Library/Logs/network-location-switcher.log
-chmod 644 ~/Library/Logs/network-location-switcher.log
+touch ~/Library/Logs/network_location_switcher.log
+chmod 644 ~/Library/Logs/network_location_switcher.log
 
 # Fix log file permissions (system mode)
 sudo mkdir -p /usr/local/log
-sudo touch /usr/local/log/network-location-switcher.log
-sudo chmod 644 /usr/local/log/network-location-switcher.log
+sudo touch /usr/local/log/network_location_switcher.log
+sudo chmod 644 /usr/local/log/network_location_switcher.log
 ```
 
 #### Python Module Errors
 ```bash
 # Check virtual environment
-source .venv/bin/activate  # development mode
+source venv/bin/activate  # development mode
 pip list | grep pyobjc
 
 # Reinstall if missing
@@ -436,45 +437,45 @@ pip install pyobjc pyobjc-framework-SystemConfiguration pyobjc-framework-CoreFou
 #### Check Service Status
 ```bash
 # Development mode
-./manager.sh status
+./scripts/manager.sh status
 
 # User mode
-launchctl list | grep com.user.network-location-switcher
+launchctl list | grep com.user.network_location_switcher
 
 # System mode  
-sudo launchctl list | grep com.system.network-location-switcher
+sudo launchctl list | grep com.system.network_location_switcher
 ```
 
 #### Manual Testing
 ```bash
 # Test in foreground (development mode)
 source activate.sh
-python network-location-switcher.py
+python network_location_switcher.py
 
 # Test configuration
-./test.py
+./tests/configuration-test.py
 
 # Test specific config file
-python network-location-switcher.py my-custom-config.json
+python network_location_switcher.py my-custom-config.json
 ```
 
 #### Reset Everything
 ```bash
 # Development mode
-./manager.sh stop
-./manager.sh uninstall  
-./manager.sh clean
-./install.sh              # Start fresh
+./scripts/manager.sh stop
+./scripts/manager.sh uninstall  
+./scripts/manager.sh clean
+./INSTALL.sh              # Start fresh
 
 # User mode
-launchctl bootout gui/$(id -u)/com.user.network-location-switcher
+launchctl bootout gui/$(id -u)/com.user.network_location_switcher
 rm ~/Library/LaunchAgents/network.location.switcher.user.plist
-./install.sh --mode user  # Reinstall
+./INSTALL.sh --mode user  # Reinstall
 
 # System mode (requires sudo)
-sudo launchctl bootout system/com.system.network-location-switcher
+sudo launchctl bootout system/com.system.network_location_switcher
 sudo rm /Library/LaunchDaemons/network.location.switcher.system.plist  
-./install.sh --mode system  # Reinstall
+./INSTALL.sh --mode system  # Reinstall
 ```
 
 ## 🔧 Advanced Configuration
@@ -482,31 +483,32 @@ sudo rm /Library/LaunchDaemons/network.location.switcher.system.plist
 ### Custom Installation Locations
 ```bash
 # Install to custom prefix
-./install.sh --mode production --prefix /opt
+./INSTALL.sh --mode production --prefix /opt
 
 # Results in:
-# /opt/bin/network-location-switcher
-# /opt/lib/network-location-switcher/
+# /opt/bin/network_location_switcher
+# /opt/lib/network_location_switcher/
 ```
 
 ### Multiple Configuration Files
 ```bash
 # Use specific config file
-python network-location-switcher.py /path/to/custom-config.json
+python network_location_switcher.py /path/to/custom-config.json
 
 # Configuration search order:
 # 1. Command line argument  
-# 2. ./network-location-config.json (script directory)
-# 3. ~/.network-location-config.json (user home)
-# 4. /usr/local/etc/network-location-config.json (system-wide)
-# 5. /etc/network-location-config.json (system)
+# 2. ./network-location-switcher.json (script directory)
+# 3. ~/.network-location-switcher.json (user home)
+# 4. ~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.json (macOS App Support)
+# 5. /usr/local/etc/network-location-switcher.json (system-wide)
+# 6. /etc/network-location-switcher.json (system)
 ```
 
 ### Log Rotation
 ```bash
 # Setup log rotation (macOS newsyslog)
 sudo cat >> /etc/newsyslog.conf << EOF
-/usr/local/log/network-location-switcher*.log    644  5     1000 *     J
+/usr/local/log/network_location_switcher*.log    644  5     1000 *     J
 EOF
 
 # Or use logrotate if installed via homebrew

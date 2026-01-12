@@ -19,7 +19,7 @@ target-version = "py39"
 # Files to exclude
 exclude = [
     ".git",
-    ".venv",
+    "venv",
     "__pycache__",
     "*.pyc",
 ]
