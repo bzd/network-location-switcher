@@ -26,21 +26,21 @@ def load_and_validate_config(
     else:
         script_dir = os.path.dirname(os.path.abspath(__file__))
         config_paths = [
-            os.path.join(script_dir, "network-location-switcher.conf"),
-            os.path.expanduser("~/.network-location-switcher.conf"),
+            os.path.join(script_dir, "network-location-switcher.json"),
+            os.path.expanduser("~/.network-location-switcher.json"),
             # macOS Application Support (user mode installations)
             os.path.expanduser(
-                "~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.conf"
+                "~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.json"
             ),
-            "/usr/local/etc/network-location-switcher.conf",
-            "/etc/network-location-switcher.conf",
+            "/usr/local/etc/network-location-switcher.json",
+            "/etc/network-location-switcher.json",
         ]
 
         # Check if we should create a config from template
         template_path = os.path.join(
-            script_dir, "network-location-switcher.default.conf"
+            script_dir, "network-location-switcher.default.json"
         )
-        main_config_path = os.path.join(script_dir, "network-location-switcher.conf")
+        main_config_path = os.path.join(script_dir, "network-location-switcher.json")
 
     config: Optional[dict[str, Any]] = None
     config_file_used: Optional[str] = None

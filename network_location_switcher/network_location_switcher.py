@@ -68,13 +68,13 @@ def show_help() -> None:
     print("  --mode, -m MODE         Use config from a specific installation mode")
     print("                          Modes: system, user, dev, auto")
     print(
-        "                          system: /usr/local/etc/network-location-switcher.conf"
+        "                          system: /usr/local/etc/network-location-switcher.json"
     )
     print(
-        "                          user:   ~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.conf"
+        "                          user:   ~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.json"
     )
     print(
-        "                          dev:    ./network-location-switcher.conf (script dir)"
+        "                          dev:    ./network-location-switcher.json (script dir)"
     )
     print("                          auto:   Search all locations (default)")
     print()
@@ -88,13 +88,13 @@ def show_help() -> None:
     print()
     print("Configuration file locations (searched in order when mode=auto):")
     print("  1. Explicit: -c /path/to/config.json")
-    print("  2. Script directory: ./network-location-switcher.conf")
-    print("  3. User home: ~/.network-location-switcher.conf")
+    print("  2. Script directory: ./network-location-switcher.json")
+    print("  3. User home: ~/.network-location-switcher.json")
     print(
-        "  4. macOS App Support: ~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.conf"
+        "  4. macOS App Support: ~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.json"
     )
-    print("  5. System-wide: /usr/local/etc/network-location-switcher.conf")
-    print("  6. System: /etc/network-location-switcher.conf")
+    print("  5. System-wide: /usr/local/etc/network-location-switcher.json")
+    print("  6. System: /etc/network-location-switcher.json")
     print()
     print("If no config file is found, a default one will be created.")
     print("Edit the config file to match your network setup.")
@@ -120,8 +120,8 @@ class ConfigMode:
     """Enum-like class for config file modes."""
 
     AUTO = "auto"  # Use default search order
-    SYSTEM = "system"  # Use /usr/local/etc/network-location-switcher.conf
-    USER = "user"  # Use /usr/local/etc/{username}/network-location-switcher.conf
+    SYSTEM = "system"  # Use /usr/local/etc/network-location-switcher.json
+    USER = "user"  # Use /usr/local/etc/{username}/network-location-switcher.json
     DEV = "dev"  # Use script directory config
 
 
@@ -240,13 +240,13 @@ def get_config_path_for_mode(mode: str) -> Optional[str]:
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
     if mode == ConfigMode.SYSTEM:
-        return "/usr/local/etc/network-location-switcher.conf"
+        return "/usr/local/etc/network-location-switcher.json"
     elif mode == ConfigMode.USER:
         return os.path.expanduser(
-            "~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.conf"
+            "~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.json"
         )
     elif mode == ConfigMode.DEV:
-        return os.path.join(script_dir, "network-location-switcher.conf")
+        return os.path.join(script_dir, "network-location-switcher.json")
     # AUTO mode uses search order
     return None
 
@@ -288,16 +288,16 @@ def load_config() -> dict[str, Any]:
         # 1. Command line argument
         config_file_arg,
         # 2. Same directory as script
-        os.path.join(script_dir, "network-location-switcher.conf"),
+        os.path.join(script_dir, "network-location-switcher.json"),
         # 3. User's home directory
-        os.path.expanduser("~/.network-location-switcher.conf"),
+        os.path.expanduser("~/.network-location-switcher.json"),
         # 4. macOS Application Support (user mode installations)
         os.path.expanduser(
-            "~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.conf"
+            "~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.json"
         ),
         # 5. System-wide configuration
-        "/usr/local/etc/network-location-switcher.conf",
-        "/etc/network-location-switcher.conf",
+        "/usr/local/etc/network-location-switcher.json",
+        "/etc/network-location-switcher.json",
     ]
 
     # Filter out None values and ensure type safety
@@ -326,8 +326,8 @@ def load_config() -> dict[str, Any]:
 
 def create_default_config(script_dir: str) -> dict[str, Any]:
     """Create a new configuration file from the default template."""
-    default_config_path = os.path.join(script_dir, "network-location-switcher.conf")
-    template_path = os.path.join(script_dir, "network-location-switcher.default.conf")
+    default_config_path = os.path.join(script_dir, "network-location-switcher.json")
+    template_path = os.path.join(script_dir, "network-location-switcher.default.json")
 
     # Try to use the template file first
     if os.path.isfile(template_path):
@@ -353,7 +353,7 @@ def create_default_config(script_dir: str) -> dict[str, Any]:
                 json.dump(clean_config, f, indent=2)
 
             log(f"Created configuration file from template: " f"{default_config_path}")
-            log("Template file used: network-location-switcher.default.conf")
+            log("Template file used: network-location-switcher.default.json")
             log("Please edit the new config file to match your network setup!")
             return clean_config
 
@@ -897,17 +897,17 @@ def run_test_config() -> bool:
         config_paths = [
             (
                 "Script directory (dev)",
-                os.path.join(script_dir, "network-location-switcher.conf"),
+                os.path.join(script_dir, "network-location-switcher.json"),
             ),
-            ("User home", os.path.expanduser("~/.network-location-switcher.conf")),
+            ("User home", os.path.expanduser("~/.network-location-switcher.json")),
             (
                 "macOS App Support (user)",
                 os.path.expanduser(
-                    "~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.conf"
+                    "~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.json"
                 ),
             ),
-            ("System-wide (system)", "/usr/local/etc/network-location-switcher.conf"),
-            ("System", "/etc/network-location-switcher.conf"),
+            ("System-wide (system)", "/usr/local/etc/network-location-switcher.json"),
+            ("System", "/etc/network-location-switcher.json"),
         ]
 
         print("\n[Config Mode: auto]")

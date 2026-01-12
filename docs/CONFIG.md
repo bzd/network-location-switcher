@@ -7,25 +7,25 @@ The network location switcher now reads its configuration from an external JSON 
 ### **Automatic Configuration Creation**
 The network switcher now uses a **template-based configuration system**:
 
-1. **Template File**: `network-location-switcher.default.conf` (included with installation)
-2. **User Config**: `network-location-switcher.conf` (created from template when needed)
+1. **Template File**: `network-location-switcher.default.json` (included with installation)
+2. **User Config**: `network-location-switcher.json` (created from template when needed)
 3. **Automatic Setup**: If no user config exists, one is created from the template
 
 ### **Configuration File Search Order**
 The script searches for configuration files in this order:
 
 1. **Command line argument**: `network_location_switcher config.json`
-2. **Script directory**: `./network-location-switcher.conf`
-3. **User home**: `~/.network-location-switcher.conf`
-4. **macOS App Support**: `~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.conf`
-5. **System-wide**: `/usr/local/etc/network-location-switcher.conf`
-6. **System**: `/etc/network-location-switcher.conf`
+2. **Script directory**: `./network-location-switcher.json`
+3. **User home**: `~/.network-location-switcher.json`
+4. **macOS App Support**: `~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.json`
+5. **System-wide**: `/usr/local/etc/network-location-switcher.json`
+6. **System**: `/etc/network-location-switcher.json`
 
 ### **Template vs User Config**
 | File | Purpose | Edited by User? |
 |------|---------|----------------|
-| `network-location-switcher.default.conf` | Template with examples and documentation | ❌ Never (overwritten on updates) |
-| `network-location-switcher.conf` | Your actual network configuration | ✅ Yes (customize for your networks) |
+| `network-location-switcher.default.json` | Template with examples and documentation | ❌ Never (overwritten on updates) |
+| `network-location-switcher.json` | Your actual network configuration | ✅ Yes (customize for your networks) |
 
 ## 📋 Configuration Format
 
@@ -142,19 +142,19 @@ The script searches for configuration files in this order:
 ### **1. First-Time Setup**
 When you first run the network switcher:
 
-1. **Automatic Template Use**: If no config exists, one is created from `network-location-switcher.default.conf`
+1. **Automatic Template Use**: If no config exists, one is created from `network-location-switcher.default.json`
 2. **Clean Template**: Comments and examples are automatically removed from your config
-3. **Ready to Edit**: Your new `network-location-switcher.conf` contains clean, editable settings
+3. **Ready to Edit**: Your new `network-location-switcher.json` contains clean, editable settings
 
 ### **2. Manual Template Creation**
 You can also create a config manually:
 
 ```bash
 # Copy and clean the template
-cp network-location-switcher.default.conf network-location-switcher.conf
+cp network-location-switcher.default.json network-location-switcher.json
 
 # Edit the new file to remove comments and add your networks
-nano network-location-switcher.conf
+nano network-location-switcher.json
 ```
 
 ### **3. Template Structure**
@@ -243,7 +243,7 @@ sudo chmod 755 /usr/local/log
 ### **2. Backup Configuration**
 ```bash
 # Backup your working config
-cp network-location-switcher.conf network-location-switcher.backup.conf
+cp network-location-switcher.json network-location-switcher.backup.json
 ```
 
 ### **3. Version Control**

@@ -10,8 +10,8 @@ SERVICE_LABEL_BASE="com.agilesv.networklocationswitcher"
 SCRIPT_NAME="network_location_switcher"
 
 # Configuration file names
-CONFIG_FILE="network-location-switcher.conf"
-CONFIG_FILE_DEFAULT="network-location-switcher.default.conf"
+CONFIG_FILE="network-location-switcher.json"
+CONFIG_FILE_DEFAULT="network-location-switcher.default.json"
 
 # Colors for output
 RED='\033[0;31m'

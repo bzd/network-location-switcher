@@ -101,7 +101,7 @@ launchctl bootout gui/$(id -u)/com.user.network_location_switcher.development
 
 #### File Locations
 - **Virtual Environment:** `./venv/`
-- **Configuration:** `./network-location-switcher.conf`
+- **Configuration:** `./network-location-switcher.json`
 - **Logs:** `./logs/network_location_switcher*.log`
 - **Service:** `~/Library/LaunchAgents/network.location.switcher.development.plist`
 
@@ -148,7 +148,7 @@ tail -f ~/Library/Logs/network_location_switcher.log
 
 #### File Locations
 - **Installation:** `~/Library/Application Support/NetworkLocationSwitcher/`
-- **Configuration:** `~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.conf`
+- **Configuration:** `~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.json`
 - **Logs:** `~/Library/Logs/NetworkLocationSwitcher/network_location_switcher*.log`
 - **Service:** `~/Library/LaunchAgents/com.agilesv.networklocationswitcher.user.plist`
 
@@ -199,7 +199,7 @@ sudo tail -f /usr/local/log/network_location_switcher.log
 
 #### File Locations
 - **Installation:** `/usr/local/lib/network_location_switcher/`
-- **Configuration:** `/usr/local/etc/network-location-switcher.conf`
+- **Configuration:** `/usr/local/etc/network-location-switcher.json`
 - **Logs:** `/usr/local/log/network_location_switcher*.log`
 - **Service:** `/Library/LaunchDaemons/network.location.switcher.system.plist`
 
@@ -211,7 +211,7 @@ sudo rm /Library/LaunchDaemons/network.location.switcher.system.plist
 
 # Remove installation
 sudo rm -rf /usr/local/lib/network_location_switcher
-sudo rm /usr/local/etc/network-location-switcher.conf
+sudo rm /usr/local/etc/network-location-switcher.json
 sudo rm /usr/local/log/network_location_switcher*.log
 ```
 
@@ -247,7 +247,7 @@ This will:
 - Check log file permissions
 
 ### 3. Edit Configuration (EXAMPLES)
-Edit the generated `network-location-switcher.conf`:
+Edit the generated `network-location-switcher.json`:
 
 ```json
 {
@@ -287,7 +287,7 @@ python network_location_switcher.py --help
 ./INSTALL.sh --mode user
 
 # Copy configuration
-cp ./network-location-switcher.conf ~/.network-location-switcher.conf
+cp ./network-location-switcher.json ~/.network-location-switcher.json
 ```
 
 ### From User → System Mode
@@ -299,7 +299,7 @@ launchctl bootout gui/$(id -u)/com.user.network_location_switcher
 ./INSTALL.sh --mode system
 
 # Copy configuration
-sudo cp ~/.network-location-switcher.conf /usr/local/etc/network-location-switcher.conf
+sudo cp ~/.network-location-switcher.json /usr/local/etc/network-location-switcher.json
 ```
 
 ### From System → Development Mode
@@ -311,8 +311,8 @@ sudo launchctl bootout system/com.system.network_location_switcher
 ./INSTALL.sh
 
 # Copy configuration
-sudo cp /usr/local/etc/network-location-switcher.conf ./network-location-switcher.conf
-sudo chown $(whoami) ./network-location-switcher.conf
+sudo cp /usr/local/etc/network-location-switcher.json ./network-location-switcher.json
+sudo chown $(whoami) ./network-location-switcher.json
 ```
 
 ## 📊 Monitoring & Logs
@@ -403,7 +403,7 @@ networksetup -listpreferredwirelessnetworks en0  # Adjust interface as needed
 ./tests/configuration-test.py
 
 # Check configuration file syntax
-python -m json.tool network-location-switcher.conf
+python -m json.tool network-location-switcher.json
 
 # Check network locations exist
 networksetup -listlocations
@@ -497,11 +497,11 @@ python network_location_switcher.py /path/to/custom-config.json
 
 # Configuration search order:
 # 1. Command line argument  
-# 2. ./network-location-switcher.conf (script directory)
-# 3. ~/.network-location-switcher.conf (user home)
-# 4. ~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.conf (macOS App Support)
-# 5. /usr/local/etc/network-location-switcher.conf (system-wide)
-# 6. /etc/network-location-switcher.conf (system)
+# 2. ./network-location-switcher.json (script directory)
+# 3. ~/.network-location-switcher.json (user home)
+# 4. ~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.json (macOS App Support)
+# 5. /usr/local/etc/network-location-switcher.json (system-wide)
+# 6. /etc/network-location-switcher.json (system)
 ```
 
 ### Log Rotation

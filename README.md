@@ -49,9 +49,9 @@ This tool essentially automates the use of the Apple *networksetup* command to c
 
 ## 🚀 Quick Start
 
-IMPORTANT NOTE: After installation, you MUST manually edit the newly created configuration file, ***network-location-switcher.conf*** to map network SSIDs to network locations so the automation knows which network location to use for each SSID:
+IMPORTANT NOTE: After installation, you MUST manually edit the newly created configuration file, ***network-location-switcher.json*** to map network SSIDs to network locations so the automation knows which network location to use for each SSID:
 
-    network-location-switcher.conf
+    network-location-switcher.json
 
 Three installation modes are possible:
 
@@ -68,11 +68,11 @@ cd network_location_switcher
 # Create:
 #   1. runtime python virtual environment.
 #   2. plists for: development, user, and system.
-#   3. default configuration file: network-location-switcher.conf
+#   3. default configuration file: network-location-switcher.json
 # HINT: Use the "--dry-run" switch to view what will be installed (no changes made)
 ./INSTALL.sh --mode user
 
-# Edit the newly created `network-location-switcher.conf` file, which will be consulted
+# Edit the newly created `network-location-switcher.json` file, which will be consulted
 # during network changes.  See CONFIG.md for details.
 # Each entry will have:
 #
@@ -80,7 +80,7 @@ cd network_location_switcher
 #    SSID_name_2 : network_location_2
 #    ...
 #
-nano network-location-switcher.conf
+nano network-location-switcher.json
 
 # If needed, manually create new network locations.
 # Replace '<network_location_name>' as needed
@@ -191,7 +191,7 @@ network_location_switcher/
 ├── LICENSE                                # GPL v3 License
 ├── pyproject.toml                         # Python project configuration
 ├── requirements-macos.txt                 # macOS-specific dependencies
-├── network-location-switcher.default.conf   # Configuration template
+├── network-location-switcher.default.json   # Configuration template
 ├── test.py                                # Configuration test helper
 ├── docs/                                  # Documentation
 │   ├── CONFIG.md                          # Configuration reference

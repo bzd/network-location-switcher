@@ -134,9 +134,9 @@ The environments are isolated because:
    - Development: `./venv/bin/python`
 
 2. **Different configuration locations**:
-   - User mode: `~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.conf`
-   - System mode: `/usr/local/etc/network-location-switcher.conf`
-   - Development: `./network-location-switcher.conf`
+   - User mode: `~/Library/Application Support/NetworkLocationSwitcher/network-location-switcher.json`
+   - System mode: `/usr/local/etc/network-location-switcher.json`
+   - Development: `./network-location-switcher.json`
 
 3. **Different log files**:
    - User mode: `~/Library/Logs/NetworkLocationSwitcher/`
