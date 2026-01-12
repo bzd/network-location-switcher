@@ -192,9 +192,10 @@ network_location_switcher/
 ├── pyproject.toml                         # Python project configuration
 ├── requirements-macos.txt                 # macOS-specific dependencies
 ├── network-location-switcher.default.json   # Configuration template
-├── test.py                                # Configuration test helper
+├── INSTALL.sh                             # Installation script
 ├── docs/                                  # Documentation
 │   ├── CONFIG.md                          # Configuration reference
+│   ├── DEBUGGING.md                       # Debugging guide
 │   ├── DEVELOPMENT.md                     # Development guide
 │   ├── INSTALL.md                         # Installation guide
 │   └── PRODUCTION.md                      # Production deployment
@@ -202,10 +203,13 @@ network_location_switcher/
 ├── network_location_switcher/             # Main Python package
 │   ├── __init__.py                        # Package initialization
 │   └── network_location_switcher.py       # Main application
-├── INSTALL.sh                             # Installation script
-└── scripts/                               # Shell scripts
-    ├── manager.sh                         # Development management
-    └── uninstall.sh                       # Uninstallation script
+├── scripts/                               # Shell scripts
+│   ├── common.sh                          # Common script utilities
+│   ├── manager.sh                         # Development management
+│   └── uninstall.sh                       # Uninstallation script
+└── tests/                                 # Test suite
+    ├── __init__.py                        # Test package initialization
+    └── configuration-test.py              # Configuration test helper
 ```
 
 ## 📄 License
