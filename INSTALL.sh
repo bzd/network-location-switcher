@@ -827,14 +827,27 @@ install_script_files() {
             dry_run_log "Would create wrapper script: $wrapper_script"
             dry_run_log "Would update log_file path in config file"
         else
-            # Use sudo if needed
-            if [[ ! -w "$INSTALL_BIN_DIR" ]]; then
-            # Copy Python script and config files to lib directory
-            sudo cp "$PROJECT_DIR/network_location_switcher/network_location_switcher.py" "$INSTALL_LIB_DIR/"
-            sudo cp "$PROJECT_DIR/requirements-macos.txt" "$INSTALL_LIB_DIR/"
+            # Determine if we need sudo for lib directory (system mode) vs bin directory
+            local need_sudo_lib=false
+            local need_sudo_bin=false
             
-            # Copy default template (always) to lib directory
-            sudo cp "$PROJECT_DIR/${CONFIG_FILE_DEFAULT}" "$INSTALL_LIB_DIR/"
+            if [[ ! -w "$INSTALL_LIB_DIR" ]]; then
+                need_sudo_lib=true
+            fi
+            if [[ ! -w "$INSTALL_BIN_DIR" ]]; then
+                need_sudo_bin=true
+            fi
+            
+            # Copy Python script and config files to lib directory
+            if [[ "$need_sudo_lib" == true ]]; then
+                sudo cp "$PROJECT_DIR/network_location_switcher/network_location_switcher.py" "$INSTALL_LIB_DIR/"
+                sudo cp "$PROJECT_DIR/requirements-macos.txt" "$INSTALL_LIB_DIR/"
+                sudo cp "$PROJECT_DIR/${CONFIG_FILE_DEFAULT}" "$INSTALL_LIB_DIR/"
+            else
+                cp "$PROJECT_DIR/network_location_switcher/network_location_switcher.py" "$INSTALL_LIB_DIR/"
+                cp "$PROJECT_DIR/requirements-macos.txt" "$INSTALL_LIB_DIR/"
+                cp "$PROJECT_DIR/${CONFIG_FILE_DEFAULT}" "$INSTALL_LIB_DIR/"
+            fi
             
             # Handle config file - preserve existing if present, otherwise create from template or project
             # For system mode, config goes to /usr/local/etc
@@ -844,23 +857,30 @@ install_script_files() {
                 # Just update log path in existing config
                 update_config_log_path "$config_dir/${CONFIG_FILE}"
             elif [ -f "$PROJECT_DIR/${CONFIG_FILE}" ]; then
-                sudo cp "$PROJECT_DIR/${CONFIG_FILE}" "$config_dir/"
+                if [[ "$need_sudo_lib" == true ]]; then
+                    sudo cp "$PROJECT_DIR/${CONFIG_FILE}" "$config_dir/"
+                    sudo chmod g+w "$config_dir/${CONFIG_FILE}"
+                else
+                    cp "$PROJECT_DIR/${CONFIG_FILE}" "$config_dir/"
+                    chmod g+w "$config_dir/${CONFIG_FILE}"
+                fi
                 log "Copied configuration from project directory to $config_dir"
-                # Make config file group-writable
-                sudo chmod g+w "$config_dir/${CONFIG_FILE}"
-                # Update log path in copied config
                 update_config_log_path "$config_dir/${CONFIG_FILE}"
             else
                 log "Creating new configuration from template in $config_dir"
-                sudo cp "$PROJECT_DIR/${CONFIG_FILE_DEFAULT}" "$config_dir/${CONFIG_FILE}"
-                # Make config file group-writable
-                sudo chmod g+w "$config_dir/${CONFIG_FILE}"
-                # Update log path in new config
+                if [[ "$need_sudo_lib" == true ]]; then
+                    sudo cp "$PROJECT_DIR/${CONFIG_FILE_DEFAULT}" "$config_dir/${CONFIG_FILE}"
+                    sudo chmod g+w "$config_dir/${CONFIG_FILE}"
+                else
+                    cp "$PROJECT_DIR/${CONFIG_FILE_DEFAULT}" "$config_dir/${CONFIG_FILE}"
+                    chmod g+w "$config_dir/${CONFIG_FILE}"
+                fi
                 update_config_log_path "$config_dir/${CONFIG_FILE}"
             fi
             
             # Create wrapper script in bin directory
-            sudo tee "$wrapper_script" > /dev/null << EOF
+            if [[ "$need_sudo_bin" == true ]]; then
+                sudo tee "$wrapper_script" > /dev/null << EOF
 #!/bin/bash
 # Production wrapper for network_location_switcher
 SCRIPT_DIR="$INSTALL_LIB_DIR"
@@ -870,42 +890,10 @@ VENV_DIR="$VENV_DIR"
 source "\$VENV_DIR/bin/activate"
 exec "\$VENV_DIR/bin/python" "\$SCRIPT_DIR/network_location_switcher.py" "\$@"
 EOF
-            
-            sudo chmod +x "$wrapper_script"
-            sudo chown "$USER:$(id -gn)" "$wrapper_script"
-        else
-            # Copy without sudo
-            cp "$PROJECT_DIR/network_location_switcher/network_location_switcher.py" "$INSTALL_LIB_DIR/"
-            cp "$PROJECT_DIR/requirements-macos.txt" "$INSTALL_LIB_DIR/"
-            
-            # Copy default template (always) to lib directory
-            cp "$PROJECT_DIR/${CONFIG_FILE_DEFAULT}" "$INSTALL_LIB_DIR/"
-            
-            # Handle config file - preserve existing if present, otherwise create from template or project
-            # For system mode, config goes to /usr/local/etc
-            # For user mode, config goes to ~/Library/Application Support/NetworkLocationSwitcher
-            if [ -f "$config_dir/${CONFIG_FILE}" ]; then
-                log "Preserving existing configuration file at $config_dir/${CONFIG_FILE}"
-                # Just update log path in existing config
-                update_config_log_path "$config_dir/${CONFIG_FILE}"
-            elif [ -f "$PROJECT_DIR/${CONFIG_FILE}" ]; then
-                cp "$PROJECT_DIR/${CONFIG_FILE}" "$config_dir/"
-                log "Copied configuration from project directory to $config_dir"
-                # Make config file group-writable
-                chmod g+w "$config_dir/${CONFIG_FILE}"
-                # Update log path in copied config
-                update_config_log_path "$config_dir/${CONFIG_FILE}"
+                sudo chmod +x "$wrapper_script"
+                sudo chown "$USER:$(id -gn)" "$wrapper_script"
             else
-                log "Creating new configuration from template in $config_dir"
-                cp "$PROJECT_DIR/${CONFIG_FILE_DEFAULT}" "$config_dir/${CONFIG_FILE}"
-                # Make config file group-writable
-                chmod g+w "$config_dir/${CONFIG_FILE}"
-                # Update log path in new config
-                update_config_log_path "$config_dir/${CONFIG_FILE}"
-            fi
-            
-            # Create wrapper script
-            cat > "$wrapper_script" << EOF
+                cat > "$wrapper_script" << EOF
 #!/bin/bash
 # Production wrapper for network_location_switcher
 SCRIPT_DIR="$INSTALL_LIB_DIR"
@@ -915,9 +903,8 @@ VENV_DIR="$VENV_DIR"
 source "\$VENV_DIR/bin/activate"
 exec "\$VENV_DIR/bin/python" "\$SCRIPT_DIR/network_location_switcher.py" "\$@"
 EOF
-            
-            chmod +x "$wrapper_script"
-        fi
+                chmod +x "$wrapper_script"
+            fi
         
         success "Script installed to $wrapper_script"
         fi  # End of DRY_RUN else block
