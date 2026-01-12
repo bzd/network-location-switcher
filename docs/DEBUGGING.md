@@ -74,6 +74,8 @@ tail -f /Users/$USER/Library/Logs/NetworkLocationSwitcher/network_location_switc
 # What SSIDs are available?
 
 ```zsh
-networksetup -listpreferredwirelessnetworks
+# Find your Wi-Fi interface (e.g., en0) with:
+# networksetup -listallhardwareports | grep -A 1 "Wi-Fi"
+networksetup -listpreferredwirelessnetworks en0
 ```
 
