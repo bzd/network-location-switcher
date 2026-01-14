@@ -485,7 +485,7 @@ DEFAULT_WIFI_LOCATION = CONFIG["default_wifi_location"]
 ETHERNET_LOCATION = CONFIG["ethernet_location"]
 LOG_FILE = CONFIG["log_file"]
 # Cache the config path to avoid repeated function calls during runtime
-CONFIG_PATH = get_config_path_used()
+CONFIG_PATH = get_config_path_used() or "unknown"
 
 # Check if we're in test mode (must be done after config is loaded
 # but before we define functions that need the config)
