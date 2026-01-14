@@ -21,7 +21,7 @@ PLIST_FILENAME_DEVELOPMENT="com.agilesv.networklocationswitcher.development.plis
 ## Directories
 APP_DIR="${HOME}/Library/Application Support/NetworkLocationSwitcher"
 alias cdapp='if [ -d ${APP_DIR} ]; then cd ${APP_DIR}; else echo "NOT FOUND: ${APP_DIR}"; fi'
-alias cdla='${HOME}/Library/LaunchAgents'
+alias cdla='cd ${HOME}/Library/LaunchAgents'
 
 ## Configuration File
 
