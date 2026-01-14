@@ -452,7 +452,7 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
         config["ssid_location_map"] = {}
 
     # Determine log file path
-    # If empty (dummy value), use installation-appropriate default
+    # If empty (default placeholder), use installation-appropriate default
     # If set by user, use their override
     log_file = config["log_file"]
     if not log_file:
