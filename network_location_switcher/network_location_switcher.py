@@ -484,6 +484,8 @@ SSID_LOCATION_MAP = CONFIG["ssid_location_map"]
 DEFAULT_WIFI_LOCATION = CONFIG["default_wifi_location"]
 ETHERNET_LOCATION = CONFIG["ethernet_location"]
 LOG_FILE = CONFIG["log_file"]
+# Cache the config path to avoid repeated function calls during runtime
+CONFIG_PATH = get_config_path_used() or "unknown"
 
 # Check if we're in test mode (must be done after config is loaded
 # but before we define functions that need the config)
@@ -1027,8 +1029,7 @@ def run_tests(test_mode: str) -> None:
 
 def switch_location(ssid: Optional[str], target: str) -> None:
     """Switch to the specified network location if not already active."""
-    config_path = get_config_path_used()
-    log(f"Using configuration: {config_path}")
+    log(f"Using configuration: {CONFIG_PATH}")
     current = get_current_location()
     log(f"Current location: {current}, target: {target}")
     if current != target:
