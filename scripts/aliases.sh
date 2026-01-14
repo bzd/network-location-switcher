@@ -44,7 +44,7 @@ alias nlsstop='launchctl bootout gui/$(id -u)/com.agilesv.networklocationswitche
 alias nlsremove='launchctl bootout gui/\$(id -u)/network_location_switcher && rm ~/Library/LaunchAgents/network_location_switcher.plist'
 
 # Information
-alias nlsprint='launchctl print gui/$(id -u)/$PLIST_FILENAME'
+alias nlsprint='launchctl print gui/$(id -u)/$PLIST_FILENAME_USER'
 alias nlsprogram='nlsprint | grep program'
 alias nlsdir='nlsprint | grep "working directory"'
 alias nlslogs='nlsprint | grep -E "std.* *path"'
