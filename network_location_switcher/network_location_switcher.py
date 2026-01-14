@@ -128,6 +128,7 @@ class ConfigMode:
 # Global to track if we're in test mode (set during arg parsing)
 _test_mode: str = TestMode.NONE
 _config_mode: str = ConfigMode.AUTO
+_config_path_used: Optional[str] = None  # Track which config file was loaded
 
 
 def parse_args() -> Optional[str]:
@@ -235,6 +236,38 @@ def get_test_mode() -> str:
     return _test_mode
 
 
+def get_config_path_used() -> Optional[str]:
+    """Return the path of the config file that was loaded."""
+    return _config_path_used
+
+
+def get_default_log_file() -> str:
+    """Determine the default log file path based on installation mode.
+
+    Returns:
+        Log file path appropriate for the installation:
+        - User mode: ~/Library/Logs/NetworkLocationSwitcher/network_location_switcher.log
+        - System mode: /usr/local/log/network_location_switcher.log
+        - Dev/fallback: script directory
+    """
+    config_path = get_config_path_used()
+
+    # Determine installation mode from config path
+    if config_path:
+        # User mode: config in ~/Library/Application Support/
+        if "/Library/Application Support/" in config_path:
+            return os.path.expanduser(
+                "~/Library/Logs/NetworkLocationSwitcher/network_location_switcher.log"
+            )
+        # System mode: config in /usr/local/etc/ or /etc/
+        if config_path.startswith("/usr/local/etc/"):
+            return "/usr/local/log/network_location_switcher.log"
+
+    # Dev/fallback: use script directory
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(script_dir, "network_location_switcher.log")
+
+
 def get_config_path_for_mode(mode: str) -> Optional[str]:
     """Get the config file path for a specific mode."""
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -253,6 +286,8 @@ def get_config_path_for_mode(mode: str) -> Optional[str]:
 
 def load_config() -> dict[str, Any]:
     """Load configuration from external JSON file."""
+    global _config_path_used
+
     # Parse command line arguments
     config_file_arg = parse_args()
     config_mode = get_config_mode()
@@ -268,6 +303,7 @@ def load_config() -> dict[str, Any]:
                 try:
                     with open(mode_config_path) as f:
                         config: dict[str, Any] = json.load(f)
+                        _config_path_used = mode_config_path
                         print(
                             f"{time.strftime('%Y-%m-%d %H:%M:%S')} "
                             f"Loaded configuration from: {mode_config_path} "
@@ -311,6 +347,7 @@ def load_config() -> dict[str, Any]:
             try:
                 with open(config_path) as f:
                     config = json.load(f)
+                    _config_path_used = config_path
                     print(
                         f"{time.strftime('%Y-%m-%d %H:%M:%S')} "
                         f"Loaded configuration from: {config_path}"
@@ -321,6 +358,7 @@ def load_config() -> dict[str, Any]:
                 continue
 
     # No config file found, create one from template
+    _config_path_used = os.path.join(script_dir, "network-location-switcher.json")
     return create_default_config(script_dir)
 
 
@@ -370,7 +408,7 @@ def create_default_config(script_dir: str) -> dict[str, Any]:
         },
         "default_wifi_location": "Automatic",
         "ethernet_location": "Wired",
-        "log_file": "/usr/local/log/network_location_switcher.log",
+        "log_file": "",  # Empty = use installation-appropriate default
     }
 
     try:
@@ -386,7 +424,7 @@ def create_default_config(script_dir: str) -> dict[str, Any]:
             "ssid_location_map": {},
             "default_wifi_location": "Automatic",
             "ethernet_location": "Wired",
-            "log_file": "/usr/local/log/network_location_switcher.log",
+            "log_file": "",  # Empty = use installation-appropriate default
         }
 
 
@@ -397,7 +435,7 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
         "ssid_location_map": {},
         "default_wifi_location": "Automatic",
         "ethernet_location": "Wired",
-        "log_file": "/usr/local/log/network_location_switcher.log",
+        "log_file": "",  # Empty string means "use installation default"
     }
 
     for key, default_value in defaults.items():
@@ -413,8 +451,16 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
         log("Error: 'ssid_location_map' must be an object/dictionary")
         config["ssid_location_map"] = {}
 
-    # Validate log file directory exists or can be created
+    # Determine log file path
+    # If empty (default placeholder), use installation-appropriate default
+    # If set by user, use their override
     log_file = config["log_file"]
+    if not log_file:
+        log_file = get_default_log_file()
+        config["log_file"] = log_file
+        log(f"Using default log file for installation mode: {log_file}")
+
+    # Validate log file directory exists or can be created
     log_dir = os.path.dirname(log_file)
     if log_dir and not os.path.exists(log_dir):
         try:
@@ -979,8 +1025,10 @@ def run_tests(test_mode: str) -> None:
     sys.exit(0 if success else 1)
 
 
-def switch_location(ssid: str, target: str) -> None:
+def switch_location(ssid: Optional[str], target: str) -> None:
     """Switch to the specified network location if not already active."""
+    config_path = get_config_path_used()
+    log(f"Using configuration: {config_path}")
     current = get_current_location()
     log(f"Current location: {current}, target: {target}")
     if current != target:
@@ -990,9 +1038,16 @@ def switch_location(ssid: str, target: str) -> None:
             )  # throw exception error if fails
             log(f"Switched network location → {target}")
             # Send notification for successful switch
+            # Build appropriate message based on connection type
+            if ssid:
+                network_info = f"Found SSID '{ssid}'"
+            elif target == ETHERNET_LOCATION:
+                network_info = "Ethernet connected"
+            else:
+                network_info = "Wi-Fi disconnected"
             send_notification(
                 "Network Location Switched",
-                f"Found SSID '{ssid}'\nSwitched to '{target}' network location",
+                f"{network_info}\nSwitched to network location '{target}'",
             )
         except Exception as e:
             log(f"Failed to switch to location '{target}': {e}")
@@ -1004,21 +1059,25 @@ def network_changed(store: Any, changed_keys: Any, info: Any) -> None:
     """
     Callback triggered instantly when a network configuration event occurs.
     """
-    ssid = get_current_ssid()
     wifi = wifi_active()
     wired = ethernet_active()
 
     if wired:
+        ssid = None  # No SSID relevant for Ethernet
         target = ETHERNET_LOCATION
         log(f"Detected Ethernet connection active. Target={target}")
-    elif wifi and ssid:
-        target = SSID_LOCATION_MAP.get(ssid, DEFAULT_WIFI_LOCATION)
-        log(f"Detected Wi-Fi SSID={ssid}, target={target}")
+    elif wifi:
+        ssid = get_current_ssid()
+        if ssid:
+            target = SSID_LOCATION_MAP.get(ssid, DEFAULT_WIFI_LOCATION)
+            log(f"Detected Wi-Fi SSID={ssid}, target={target}")
+        else:
+            target = DEFAULT_WIFI_LOCATION
+            log(f"Wi-Fi active but no SSID detected. Using default: {target}")
     else:
+        ssid = None  # Wi-Fi is off
         target = DEFAULT_WIFI_LOCATION
-        log(
-            "No active Wi-Fi or Ethernet detected. " f"Using default location: {target}"
-        )
+        log(f"No active Wi-Fi or Ethernet detected. Using default: {target}")
 
     switch_location(ssid, target)
 
