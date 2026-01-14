@@ -60,7 +60,7 @@ alias nlserr='tail -f ${HOME}/Library/Logs/NetworkLocationSwitcher/network_locat
 # Development Mode
 DEV_DIR="/usr/local/src/$USER/network-location-switcher"
 
-alias cddev='if [ -d $DEV_DIR ]; then cd $DEV_DIR; else echo "NOT FOUND: $DEV_DIR"; fi'
+alias cddev='if [ -d "$DEV_DIR" ]; then cd $DEV_DIR; else echo "NOT FOUND: $DEV_DIR"; fi'
 alias nlsdevlog='tail -f $DEV_DIR/logs/network_location_switcher.log'
 alias nlsdevout='tail -f $DEV_DIR/logs/network_location_switcher-stdout.log'
 alias nlsdeverr='tail -f $DEV_DIR/logs/network_location_switcher-stderr.log'
