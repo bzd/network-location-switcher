@@ -44,7 +44,7 @@ alias nlsstop='launchctl bootout gui/$(id -u)/com.agilesv.networklocationswitche
 alias nlsremove='launchctl bootout gui/\$(id -u)/network_location_switcher && rm ~/Library/LaunchAgents/network_location_switcher.plist'
 
 # Information
-alias nlsprint='launchctl print gui/$(id -u)/$PLIST_FILENAME_USER'
+alias nlsprint='launchctl print gui/$(id -u)/$LAUNCHCTL_PROCESS_USER'
 alias nlsprogram='nlsprint | grep program'
 alias nlsdir='nlsprint | grep "working directory"'
 alias nlslogs='nlsprint | grep -E "std.* *path"'
@@ -66,3 +66,11 @@ alias nlsdevout='tail -f $DEV_DIR/logs/network_location_switcher-stdout.log'
 alias nlsdeverr='tail -f $DEV_DIR/logs/network_location_switcher-stderr.log'
 
 alias nlsdevcp='cp $DEV_DIR/network_location_switcher/network_location_switcher.py $APP_DIR'
+
+
+alias nlslogreset='LOG_FILE="network_location_switcher.log"; rm $LOG_FILE; touch $LOG_FILE; tail -f $LOG_FILE'
+alias nlsstderrreset='STDERR_FILE="network_location_switcher-stderr.log"; rm $STDERR_FILE; touch $STDERR_FILE; tail -f $STDERR_FILE'
+alias nlsstdoutreset='STDOUT_FILE="network_location_switcher-stdout.log"; rm $STDOUT_FILE; touch $STDOUT_FILE; tail -f $STDOUT_FILE'
+
+alias nlscmds='alias | grep nls'
+
