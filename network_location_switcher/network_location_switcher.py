@@ -28,10 +28,14 @@ import SystemConfiguration
 
 # Version constant
 VERSION = "Network Location Switcher v2.0"
+LOG_FILE = ""
 
 
 def log(msg: str) -> None:
     """Log message with timestamp to configured log file."""
+    if not LOG_FILE:
+        print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} {msg}", file=sys.stderr)
+        return
     try:
         with open(LOG_FILE, "a") as f:
             f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} {msg}\n")
@@ -342,8 +346,12 @@ def load_config() -> dict[str, Any]:
         if path is not None:
             config_paths_filtered.append(path)
 
+    found_existing = False
+    last_error: Optional[Exception] = None
+
     for config_path in config_paths_filtered:
         if os.path.isfile(config_path):
+            found_existing = True
             try:
                 with open(config_path) as f:
                     config = json.load(f)
@@ -355,7 +363,14 @@ def load_config() -> dict[str, Any]:
                     return config
             except (OSError, json.JSONDecodeError) as e:
                 print(f"Error reading config file {config_path}: {e}")
+                last_error = e
                 continue
+
+    if found_existing:
+        print("Error: A configuration file exists but could not be loaded.")
+        if last_error is not None:
+            print(f"Last error: {last_error}")
+        sys.exit(1)
 
     # No config file found, create one from template
     _config_path_used = os.path.join(script_dir, "network-location-switcher.json")

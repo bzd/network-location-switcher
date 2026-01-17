@@ -219,3 +219,4 @@ network-location-switcher*.conf
 !network-location-switcher.default.conf
 *.plist
 *_NOTES.*
+.build/

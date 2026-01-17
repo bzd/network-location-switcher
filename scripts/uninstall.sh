@@ -122,18 +122,9 @@ uninstall_user() {
         success "Binary removed"
     fi
     
-    # Remove library directory
+    # Preserve Application Support directory and configuration
     if [ -d "$lib_dir" ]; then
-        log "Removing library directory..."
-        # Need sudo if parent directory is not writable (can't remove subdirectories)
-        # or if the directory itself is not writable
-        local lib_parent=$(dirname "$lib_dir")
-        if [[ ! -w "$lib_parent" ]] || [[ ! -w "$lib_dir" ]]; then
-            sudo rm -rf "$lib_dir"
-        else
-            rm -rf "$lib_dir"
-        fi
-        success "Library directory removed"
+        log "Preserving Application Support directory: $lib_dir"
     fi
     
     # Remove user logs
@@ -198,6 +189,10 @@ uninstall_system() {
         success "Library directory removed"
     fi
     
+    # Preserve system config directory and configuration file
+    if [ -d "$etc_dir" ]; then
+        log "Preserving system config directory: $etc_dir"
+    fi
     # Note: Configuration file is preserved at $etc_dir/${CONFIG_FILE}
     # Remove it manually if desired: sudo rm /usr/local/etc/${CONFIG_FILE}
     
